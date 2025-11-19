@@ -1,0 +1,214 @@
+service: restaurant-orders-service
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role: arn:aws:iam::281043631139:role/LabRole
+  environment:
+    ORDERS_TABLE: ${self:service}-orders-${self:provider.stage}
+    USERS_TABLE: restaurant-users-${self:provider.stage}
+    AUTH_API_URL: https://your-auth-api.execute-api.us-east-1.amazonaws.com/dev
+    WEBSOCKET_BROADCAST_FUNCTION: restaurant-websocket-${self:provider.stage}-broadcastNotification
+    NOTIFICATIONS_FUNCTION: restaurant-notifications-service-${self:provider.stage}-sendNotification
+
+functions:
+  # Crear pedido (cliente)
+  createOrder:
+    handler: handlers/orders.create
+    description: Crear nuevo pedido
+    memorySize: 256
+    timeout: 15
+    events:
+      - http:
+          path: orders
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Listar pedidos (con filtros)
+  listOrders:
+    handler: handlers/orders.list
+    description: Listar pedidos con filtros opcionales
+    memorySize: 256
+    timeout: 10
+    events:
+      - http:
+          path: orders
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Obtener pedido por ID
+  getOrder:
+    handler: handlers/orders.getById
+    description: Obtener detalles de un pedido
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: orders/{id}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Actualizar estado del pedido
+  updateOrderStatus:
+    handler: handlers/orders.updateStatus
+    description: Actualizar estado del pedido (solo staff)
+    memorySize: 256
+    timeout: 15
+    events:
+      - http:
+          path: orders/{id}/status
+          method: patch
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Asignar pedido a empleado
+  assignOrder:
+    handler: handlers/orders.assign
+    description: Asignar pedido a empleado (admin)
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: orders/{id}/assign
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Mis asignaciones (empleado)
+  myAssignments:
+    handler: handlers/orders.myAssignments
+    description: Obtener pedidos asignados a mí
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: orders/my-assignments
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Cancelar pedido
+  cancelOrder:
+    handler: handlers/orders.cancel
+    description: Cancelar pedido
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: orders/{id}/cancel
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Dashboard metrics (admin)
+  dashboardMetrics:
+    handler: handlers/orders.dashboardMetrics
+    description: Obtener métricas del dashboard
+    memorySize: 256
+    timeout: 15
+    events:
+      - http:
+          path: dashboard/metrics
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+resources:
+  Resources:
+    # Tabla DynamoDB para Pedidos
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ORDERS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: customerId
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+          - AttributeName: orderNumber
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          # Índice para buscar por cliente
+          - IndexName: CustomerIdIndex
+            KeySchema:
+              - AttributeName: customerId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          
+          # Índice para buscar por estado
+          - IndexName: StatusIndex
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          
+          # Índice para buscar por número de pedido
+          - IndexName: OrderNumberIndex
+            KeySchema:
+              - AttributeName: orderNumber
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        
+        Tags:
+          - Key: Service
+            Value: Orders
+          - Key: Environment
+            Value: ${self:provider.stage}

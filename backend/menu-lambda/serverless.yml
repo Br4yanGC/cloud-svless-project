@@ -1,0 +1,148 @@
+service: restaurant-menu-service
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role: arn:aws:iam::281043631139:role/LabRole
+  environment:
+    PRODUCTS_TABLE: ${self:service}-products-${self:provider.stage}
+    AUTH_API_URL: https://your-auth-api.execute-api.us-east-1.amazonaws.com/dev
+
+functions:
+  # Listar productos del menú
+  listMenu:
+    handler: handlers/menu.list
+    description: Listar productos del menú (público)
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: menu
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Obtener producto por ID
+  getProduct:
+    handler: handlers/menu.getById
+    description: Obtener detalles de un producto
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: menu/{id}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Crear producto (admin)
+  createProduct:
+    handler: handlers/menu.create
+    description: Crear nuevo producto (admin)
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: menu
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Actualizar producto (admin)
+  updateProduct:
+    handler: handlers/menu.update
+    description: Actualizar producto existente (admin)
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: menu/{id}
+          method: put
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Eliminar producto (admin)
+  deleteProduct:
+    handler: handlers/menu.delete
+    description: Eliminar producto (admin)
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: menu/{id}
+          method: delete
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+  # Toggle disponibilidad (admin)
+  toggleAvailability:
+    handler: handlers/menu.toggleAvailability
+    description: Activar/desactivar producto
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: menu/{id}/toggle
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
+resources:
+  Resources:
+    # Tabla DynamoDB para Productos
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PRODUCTS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: category
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          # Índice para buscar por categoría
+          - IndexName: CategoryIndex
+            KeySchema:
+              - AttributeName: category
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        
+        Tags:
+          - Key: Service
+            Value: Menu
+          - Key: Environment
+            Value: ${self:provider.stage}

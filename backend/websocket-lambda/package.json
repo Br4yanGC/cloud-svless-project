@@ -1,0 +1,19 @@
+{
+  "name": "alertautec-websocket",
+  "version": "1.0.0",
+  "description": "WebSocket Lambda para notificaciones en tiempo real",
+  "main": "handlers/websocket.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "remove": "serverless remove"
+  },
+  "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.478.0",
+    "@aws-sdk/client-dynamodb": "^3.478.0",
+    "@aws-sdk/lib-dynamodb": "^3.478.0",
+    "react-hot-toast": "^2.6.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0"
+  }
+}

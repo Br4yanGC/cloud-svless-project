@@ -1,0 +1,35 @@
+{
+  "name": "restaurant-orders-service",
+  "version": "1.0.0",
+  "description": "Microservicio de gestión de pedidos para Sistema de Restaurante",
+  "main": "handlers/orders.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove": "serverless remove",
+    "logs": "serverless logs -f",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.478.0",
+    "@aws-sdk/client-lambda": "^3.932.0",
+    "@aws-sdk/client-ses": "^3.932.0",
+    "@aws-sdk/lib-dynamodb": "^3.478.0",
+    "node-fetch": "^2.7.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0"
+  },
+  "keywords": [
+    "serverless",
+    "aws",
+    "lambda",
+    "orders",
+    "restaurant",
+    "food-delivery"
+  ],
+  "author": "",
+  "license": "MIT"
+}

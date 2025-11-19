@@ -1,0 +1,187 @@
+service: restaurant-auth-service
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  
+  # Variables de entorno para todas las Lambdas
+  environment:
+    USERS_TABLE: ${self:service}-users-${self:provider.stage}
+    JWT_SECRET: restaurant-super-secret-key-2024-change-in-production
+    JWT_EXPIRES_IN: 1h
+    STAGE: ${self:provider.stage}
+  
+  # Permisos IAM para acceder a DynamoDB
+  iam:
+    role: arn:aws:iam::281043631139:role/LabRole
+
+# Funciones Lambda
+functions:
+  register:
+    handler: handlers/auth.register
+    description: Register new user
+    events:
+      - http:
+          path: auth/register
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 256
+
+  registerPublic:
+    handler: handlers/auth.registerPublic
+    description: Public registration for clients (clientes)
+    events:
+      - http:
+          path: auth/register/public
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 256
+
+  login:
+    handler: handlers/auth.login
+    description: User login
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 256
+
+  getProfile:
+    handler: handlers/auth.getProfile
+    description: Get authenticated user profile
+    events:
+      - http:
+          path: auth/me
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 128
+
+  validateToken:
+    handler: handlers/auth.validateToken
+    description: Validate JWT token for other services
+    events:
+      - http:
+          path: auth/validate
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 128
+
+  listAdmins:
+    handler: handlers/auth.listAdmins
+    description: List all restaurant staff and administrators (for admin)
+    events:
+      - http:
+          path: auth/admins
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 128
+
+  updateUserProfile:
+    handler: handlers/auth.updateUserProfile
+    description: Update user profile (admin or self)
+    events:
+      - http:
+          path: auth/users/{userId}
+          method: put
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 128
+
+# Recursos de AWS (DynamoDB)
+resources:
+  Resources:
+    # Tabla de usuarios en DynamoDB
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE}
+        BillingMode: PAY_PER_REQUEST  # On-demand, no necesitas provisionar capacidad
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH  # Partition key
+        GlobalSecondaryIndexes:
+          - IndexName: EmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Service
+            Value: auth
+
+  # Outputs para referencia
+  Outputs:
+    UsersTableArn:
+      Description: ARN of Users DynamoDB table
+      Value: !GetAtt UsersTable.Arn
+      Export:
+        Name: ${self:service}-users-table-arn-${self:provider.stage}
+    
+    ApiGatewayUrl:
+      Description: API Gateway endpoint URL
+      Value: !Sub "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}"
+      Export:
+        Name: ${self:service}-api-url-${self:provider.stage}
+
+# Plugins (opcional)
+plugins:
+  - serverless-offline  # Para desarrollo local
+
+# Package configuration
+package:
+  exclude:
+    - .git/**
+    - .env.example
+    - README.md
+    - .serverless/**
+  include:
+    - handlers/**
+    - utils/**
+    - node_modules/**

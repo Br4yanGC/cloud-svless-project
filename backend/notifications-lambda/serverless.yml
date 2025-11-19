@@ -1,0 +1,103 @@
+service: restaurant-notifications-service
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  environment:
+    NOTIFICATIONS_TABLE: ${self:service}-${self:provider.stage}
+    SNS_TOPIC_ARN: !Ref NotificationsTopic
+  iam:
+    role: arn:aws:iam::281043631139:role/LabRole
+
+functions:
+  createNotification:
+    handler: handlers/notifications.create
+    events:
+      - http:
+          path: /notifications
+          method: post
+          cors: true
+  
+  listNotifications:
+    handler: handlers/notifications.list
+    events:
+      - http:
+          path: /notifications/user/{userId}
+          method: get
+          cors: true
+  
+  markAsRead:
+    handler: handlers/notifications.markAsRead
+    events:
+      - http:
+          path: /notifications/read/{id}
+          method: put
+          cors: true
+  
+  sendEmail:
+    handler: handlers/notifications.sendEmail
+    events:
+      - http:
+          path: /notifications/email
+          method: post
+          cors: true
+  
+  listSubscriptions:
+    handler: handlers/notifications.listSubscriptions
+    events:
+      - http:
+          path: /notifications/subscriptions
+          method: get
+          cors: true
+  
+  subscribeEmail:
+    handler: handlers/notifications.subscribeEmail
+    events:
+      - http:
+          path: /notifications/subscribe
+          method: post
+          cors: true
+  
+  unsubscribeEmail:
+    handler: handlers/notifications.unsubscribe
+    events:
+      - http:
+          path: /notifications/unsubscribe
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    NotificationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.NOTIFICATIONS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+    
+    NotificationsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: alertautec-notifications-topic
+        DisplayName: AlertaUTEC Notifications

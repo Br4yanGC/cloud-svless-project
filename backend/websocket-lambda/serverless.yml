@@ -1,0 +1,75 @@
+service: restaurant-websocket-service
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role: arn:aws:iam::281043631139:role/LabRole
+  environment:
+    CONNECTIONS_TABLE: ${self:service}-connections-${self:provider.stage}
+    WEBSOCKET_ENDPOINT: !Sub "https://${WebsocketsApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}"
+
+functions:
+  # Cuando un cliente se conecta
+  connectionHandler:
+    handler: handlers/websocket.connect
+    events:
+      - websocket:
+          route: $connect
+  
+  # Cuando un cliente se desconecta
+  disconnectionHandler:
+    handler: handlers/websocket.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  
+  # Cuando un cliente envía un mensaje
+  messageHandler:
+    handler: handlers/websocket.message
+    events:
+      - websocket:
+          route: $default
+  
+  # Lambda para enviar notificaciones (llamada por otros servicios)
+  broadcastNotification:
+    handler: handlers/websocket.broadcast
+    environment:
+      CONNECTIONS_TABLE: ${self:provider.environment.CONNECTIONS_TABLE}
+
+# Tabla para guardar conexiones activas
+resources:
+  Resources:
+    ConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.CONNECTIONS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+package:
+  exclude:
+    - .git/**
+    - README.md
+    - .serverless/**
+  include:
+    - handlers/**
+    - node_modules/**
