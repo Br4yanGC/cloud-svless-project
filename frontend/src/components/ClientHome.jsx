@@ -53,10 +53,18 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
         const data = JSON.parse(event.data);
         console.log('📨 Mensaje WebSocket recibido:', data);
         
-        // Si es una actualización de pedido, recargar
+        // Si es una actualización de pedido, actualizar localmente sin recargar
         if (data.type === 'ORDER_STATUS_CHANGED' || data.type === 'order-updated' || data.type === 'order-status-changed') {
-          console.log('🔄 Recargando pedidos por cambio de estado...');
-          loadMyOrders();
+          console.log('🔄 Actualizando pedido localmente...');
+          
+          // Actualizar el estado de la orden específica
+          setMyOrders(prevOrders => 
+            prevOrders.map(order => 
+              order.id === data.orderId 
+                ? { ...order, status: data.status, timeline: data.timeline || order.timeline }
+                : order
+            )
+          );
         }
       };
       
