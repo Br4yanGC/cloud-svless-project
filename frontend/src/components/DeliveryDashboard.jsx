@@ -332,11 +332,7 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
 
                   {order.status === 'en_camino' && (
                     <button
-                      onClick={() => {
-                        if (window.confirm('¿Confirmas que el pedido fue entregado?')) {
-                          markAsDelivered(order.id);
-                        }
-                      }}
+                      onClick={() => markAsDelivered(order.id)}
                       className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
                     >
                       <CheckCircle size={20} />
