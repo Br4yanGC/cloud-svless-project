@@ -13,7 +13,7 @@ provider:
     ORDERS_TABLE: ${self:service}-orders-${self:provider.stage}
     USERS_TABLE: restaurant-users-${self:provider.stage}
     AUTH_API_URL: https://tcb2i6e738.execute-api.us-east-1.amazonaws.com/dev
-    WEBSOCKET_BROADCAST_FUNCTION: restaurant-websocket-${self:provider.stage}-broadcastNotification
+    WEBSOCKET_BROADCAST_FUNCTION: restaurant-websocket-service-${self:provider.stage}-broadcastNotification
     NOTIFICATIONS_FUNCTION: restaurant-notifications-service-${self:provider.stage}-sendNotification
 
 functions:
