@@ -275,19 +275,6 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Staff Info */}
-                {(order.cook || order.dispatcher) && (
-                  <div className="bg-purple-50 rounded-lg p-4 mb-4 space-y-2">
-                    <p className="font-semibold text-purple-800 mb-2">👥 Personal Asignado:</p>
-                    {order.cook && (
-                      <p className="text-sm text-gray-700">👨‍🍳 <strong>Cocinero:</strong> {order.cook.name}</p>
-                    )}
-                    {order.dispatcher && (
-                      <p className="text-sm text-gray-700">📦 <strong>Despachador:</strong> {order.dispatcher.name}</p>
-                    )}
-                  </div>
-                )}
-
                 {/* Items */}
                 <div className="border-t border-gray-200 pt-4 mb-4">
                   <h4 className="font-semibold text-gray-700 mb-3">📦 Productos:</h4>
