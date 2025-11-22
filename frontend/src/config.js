@@ -58,6 +58,22 @@ export const apiRequest = async (endpoint, options = {}, apiType = 'AUTH') => {
   delete config.skipAuth;
 
   const response = await fetch(`${baseUrl}${endpoint}`, config);
+  
+  // Si el token expiró, limpiar sesión y redirigir
+  if (response.status === 401) {
+    const data = await response.json();
+    
+    // Si es error de token, limpiar localStorage
+    if (data.message && (data.message.includes('Token') || data.message.includes('token') || data.message.includes('Unauthorized'))) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+    }
+    
+    throw new Error(data.message || 'No autorizado');
+  }
+  
   const data = await response.json();
 
   if (!response.ok) {
