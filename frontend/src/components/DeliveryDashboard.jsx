@@ -53,20 +53,37 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
       }, 'ORDERS');
       
       console.log('📦 Todas las órdenes:', response.orders);
+      console.log('👤 Current User:', currentUser);
       console.log('👤 Current User ID:', currentUser?.id);
+      console.log('👤 Current User Email:', currentUser?.email);
       
       // Filtrar órdenes asignadas a este repartidor
       const myDeliveries = response.orders.filter(order => {
-        const hasDeliveryPerson = order.deliveryPerson && order.deliveryPerson.id === currentUser?.id;
-        console.log(`Orden ${order.id}:`, {
-          deliveryPerson: order.deliveryPerson,
+        if (!order.deliveryPerson) {
+          console.log(`❌ Orden ${order.id}: No tiene deliveryPerson asignado`);
+          return false;
+        }
+        
+        const matchById = order.deliveryPerson.id === currentUser?.id;
+        const matchByEmail = order.deliveryPerson.email === currentUser?.email;
+        const match = matchById || matchByEmail;
+        
+        console.log(`🔍 Orden ${order.id}:`, {
+          orderNumber: order.orderNumber,
           status: order.status,
-          match: hasDeliveryPerson
+          deliveryPerson: order.deliveryPerson,
+          currentUserId: currentUser?.id,
+          currentUserEmail: currentUser?.email,
+          matchById,
+          matchByEmail,
+          MATCH: match ? '✅' : '❌'
         });
-        return hasDeliveryPerson;
+        
+        return match;
       });
       
       console.log('🚗 Mis entregas filtradas:', myDeliveries);
+      console.log(`📊 Total de entregas encontradas: ${myDeliveries.length}`);
       setMyOrders(myDeliveries);
     } catch (error) {
       console.error('Error al cargar mis órdenes:', error);
