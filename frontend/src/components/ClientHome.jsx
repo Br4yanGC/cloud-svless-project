@@ -39,6 +39,43 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   useEffect(() => {
     if (activeTab === 'orders' || activeTab === 'history') {
       loadMyOrders();
+      
+      // Conectar WebSocket para actualizaciones en tiempo real
+      const ws = new WebSocket(API_CONFIG.WEBSOCKET_URL);
+      
+      ws.onopen = () => {
+        console.log('🔌 WebSocket conectado');
+        // Suscribirse a actualizaciones de pedidos del usuario
+        ws.send(JSON.stringify({
+          action: 'subscribe',
+          userId: currentUser?.id,
+          type: 'order-updates'
+        }));
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('📨 Mensaje WebSocket recibido:', data);
+        
+        // Si es una actualización de pedido, recargar
+        if (data.type === 'order-updated' || data.type === 'order-status-changed') {
+          loadMyOrders();
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('❌ Error WebSocket:', error);
+      };
+      
+      ws.onclose = () => {
+        console.log('🔌 WebSocket desconectado');
+      };
+      
+      return () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+      };
     }
   }, [activeTab]);
 

@@ -9,9 +9,42 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
 
   useEffect(() => {
     loadOrders();
-    // Actualizar cada 30 segundos
-    const interval = setInterval(loadOrders, 30000);
-    return () => clearInterval(interval);
+    
+    // Conectar WebSocket para actualizaciones en tiempo real
+    const ws = new WebSocket(API_CONFIG.WEBSOCKET_URL);
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket conectado (Cocina)');
+      ws.send(JSON.stringify({
+        action: 'subscribe',
+        role: 'cocinero',
+        type: 'kitchen-updates'
+      }));
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Mensaje WebSocket recibido (Cocina):', data);
+      
+      // Recargar órdenes cuando hay cambios
+      if (data.type === 'order-created' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+        loadOrders();
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('❌ Error WebSocket:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('🔌 WebSocket desconectado');
+    };
+    
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, []);
 
   const loadOrders = async () => {
