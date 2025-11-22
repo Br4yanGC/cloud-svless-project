@@ -505,6 +505,32 @@ module.exports.cancel = async (event) => {
   }
 };
 
+// Lambda: Obtener pedidos del cliente actual
+module.exports.myOrders = async (event) => {
+  try {
+    // Verificar autenticación (cliente)
+    const auth = await requireAuth(event, ['cliente']);
+    if (!auth.authenticated) {
+      return error(401, auth.error);
+    }
+
+    // Obtener pedidos del cliente
+    const orders = await listOrdersByCustomer(auth.user.id);
+
+    // Ordenar por fecha más reciente primero
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return success({ 
+      orders,
+      count: orders.length 
+    });
+
+  } catch (err) {
+    console.error('Error obteniendo pedidos del cliente:', err);
+    return error(500, 'Error interno del servidor');
+  }
+};
+
 // Lambda: Obtener métricas del dashboard
 module.exports.dashboardMetrics = async (event) => {
   try {

@@ -102,6 +102,23 @@ functions:
               - Authorization
             allowCredentials: true
 
+  # Mis pedidos (cliente)
+  myOrders:
+    handler: handlers/orders.myOrders
+    description: Obtener mis pedidos como cliente
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: orders/my-orders
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
   # Mis asignaciones (empleado)
   myAssignments:
     handler: handlers/orders.myAssignments
