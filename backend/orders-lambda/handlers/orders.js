@@ -607,6 +607,15 @@ module.exports.assignDriver = async (event) => {
     const { id } = event.pathParameters;
     const { driverName, driverId, driverEmail, driverPhone } = JSON.parse(event.body);
 
+    console.log('🚀 assignDriver - Datos recibidos:', {
+      orderId: id,
+      driverName,
+      driverId,
+      driverEmail,
+      driverPhone,
+      body: event.body
+    });
+
     if (!driverName || !driverName.trim()) {
       return error(400, 'El nombre del repartidor es requerido');
     }
@@ -641,6 +650,8 @@ module.exports.assignDriver = async (event) => {
       phone: driverPhone || null,
       assignedAt: now
     };
+
+    console.log('📦 deliveryPerson que se guardará:', order.deliveryPerson);
 
     // Guardar información del despachador que asigna
     order.dispatcher = {

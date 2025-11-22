@@ -113,6 +113,17 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
     setAssigningDriver(true);
     
     try {
+      console.log('🚀 Asignando repartidor:', {
+        orderId: selectedOrder.id,
+        selectedDriver: selectedDriver,
+        payload: {
+          driverName: selectedDriver.name,
+          driverId: selectedDriver.id,
+          driverEmail: selectedDriver.email,
+          driverPhone: selectedDriver.phoneNumber
+        }
+      });
+      
       const response = await apiRequest(
         `${API_CONFIG.ENDPOINTS.ORDERS}/${selectedOrder.id}/assign-driver`, 
         {
@@ -127,7 +138,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
         'ORDERS'
       );
       
-      console.log('✅ Repartidor asignado exitosamente');
+      console.log('✅ Repartidor asignado exitosamente:', response);
       
       // Cerrar modal
       closeDriverModal();
