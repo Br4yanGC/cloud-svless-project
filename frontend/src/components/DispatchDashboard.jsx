@@ -9,45 +9,60 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
   useEffect(() => {
     loadOrders();
-    const interval = setInterval(loadOrders, 30000);
-    return () => clearInterval(interval);
+    
+    // Conectar WebSocket para actualizaciones en tiempo real
+    const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=despachador`;
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket conectado (Despacho)');
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Mensaje WebSocket recibido (Despacho):', data);
+      
+      // Recargar órdenes cuando hay cambios
+      if (data.type === 'NEW_ORDER' || data.type === 'order-updated' || data.type === 'order-status-changed' || data.type === 'ORDER_STATUS_CHANGED') {
+        console.log('🔄 Recargando órdenes por cambio...');
+        loadOrders();
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('❌ Error WebSocket:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('🔌 WebSocket desconectado');
+    };
+    
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, []);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest(`${API_CONFIG.ORDERS_URL}/orders`, {
+      const response = await apiRequest(API_CONFIG.ENDPOINTS.ORDERS, {
         method: 'GET'
-      });
+      }, 'ORDERS');
       
-      // Filtrar órdenes relevantes para despacho
+      console.log('📦 Órdenes recibidas (Despacho):', response.orders);
+      
+      // Filtrar órdenes relevantes para despacho (empacado, en_camino, entregado)
       const dispatchOrders = response.orders.filter(order => 
-        ['listo', 'en_camino', 'entregado'].includes(order.status)
+        ['empacado', 'en_camino', 'entregado'].includes(order.status)
       );
       
+      console.log('👨‍💼 Órdenes para despacho:', dispatchOrders);
       setOrders(dispatchOrders);
     } catch (error) {
       console.error('Error al cargar órdenes:', error);
-      // Mock data si falla la API
-      setOrders([
-        {
-          id: 'ORD-001',
-          customerName: 'Juan Pérez',
-          deliveryInfo: {
-            customerName: 'Juan Pérez',
-            address: 'Av. Los Pinos 123, San Isidro',
-            phone: '+51999888777'
-          },
-          address: 'Av. Los Pinos 123, San Isidro',
-          phone: '+51999888777',
-          items: [
-            { productName: 'Pizza Pepperoni Grande', quantity: 2 }
-          ],
-          status: 'listo',
-          total: 95.80,
-          deliveryDriver: null
-        }
-      ]);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -73,7 +88,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'listo': 'bg-green-100 text-green-800 border-green-300',
+      'empacado': 'bg-green-100 text-green-800 border-green-300',
       'en_camino': 'bg-blue-100 text-blue-800 border-blue-300',
       'entregado': 'bg-gray-100 text-gray-800 border-gray-300'
     };
@@ -82,7 +97,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
   const getStatusLabel = (status) => {
     const labels = {
-      'listo': 'Listo para Envío',
+      'empacado': 'Listo para Envío',
       'en_camino': 'En Camino',
       'entregado': 'Entregado'
     };
@@ -90,13 +105,13 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
   };
 
   const filteredOrders = orders.filter(order => {
-    if (filter === 'ready') return order.status === 'listo';
+    if (filter === 'ready') return order.status === 'empacado';
     if (filter === 'assigned') return order.status === 'en_camino';
     if (filter === 'delivered') return order.status === 'entregado';
     return true;
   });
 
-  const readyCount = orders.filter(o => o.status === 'listo').length;
+  const readyCount = orders.filter(o => o.status === 'empacado').length;
   const assignedCount = orders.filter(o => o.status === 'en_camino').length;
   const deliveredCount = orders.filter(o => o.status === 'entregado').length;
 
