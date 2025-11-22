@@ -12,17 +12,17 @@ export const API_CONFIG = {
     PROFILE: '/auth/me',
     VALIDATE: '/auth/validate',
     // Orders
-    ORDERS: '/api/orders',
-    CREATE_ORDER: '/api/orders',
-    ORDER_BY_ID: (id) => `/api/orders/${id}`,
-    UPDATE_ORDER_STATUS: (id) => `/api/orders/${id}/status`,
-    ASSIGN_ORDER: (id) => `/api/orders/${id}/assign`,
-    MY_ASSIGNMENTS: '/api/orders/my-assignments',
-    CANCEL_ORDER: (id) => `/api/orders/${id}/cancel`,
-    DASHBOARD_METRICS: '/api/dashboard/metrics',
+    ORDERS: '/orders',
+    CREATE_ORDER: '/orders',
+    ORDER_BY_ID: (id) => `/orders/${id}`,
+    UPDATE_ORDER_STATUS: (id) => `/orders/${id}/status`,
+    ASSIGN_ORDER: (id) => `/orders/${id}/assign`,
+    MY_ASSIGNMENTS: '/orders/my-assignments',
+    CANCEL_ORDER: (id) => `/orders/${id}/cancel`,
+    DASHBOARD_METRICS: '/dashboard/metrics',
     // Menu
-    MENU: '/api/menu',
-    PRODUCT_BY_ID: (id) => `/api/menu/${id}`,
+    MENU: '/menu',
+    PRODUCT_BY_ID: (id) => `/menu/${id}`,
   }
 };
 
