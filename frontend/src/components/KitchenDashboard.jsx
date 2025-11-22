@@ -54,6 +54,11 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
       console.log('📦 Órdenes recibidas del backend:', response.orders);
       console.log('📦 Total órdenes:', response.orders?.length || 0);
       
+      // Log de IDs de órdenes para debug
+      response.orders?.forEach(order => {
+        console.log(`📋 Orden: ${order.orderNumber} - ID: ${order.id} - Estado: ${order.status}`);
+      });
+      
       // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado)
       const kitchenOrders = response.orders.filter(order => 
         ['recibido', 'cocinando', 'empacado'].includes(order.status)
@@ -73,16 +78,21 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await apiRequest(`${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`, {
+      console.log('🔄 Actualizando orden:', orderId, 'a estado:', newStatus);
+      const url = `${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`;
+      console.log('📍 URL completa:', url);
+      
+      await apiRequest(url, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       }, 'ORDERS');
       
+      console.log('✅ Estado actualizado exitosamente');
       // Recargar órdenes para actualizar la vista
       await loadOrders();
     } catch (error) {
-      console.error('Error al actualizar orden:', error);
-      alert('Error al actualizar el estado de la orden');
+      console.error('❌ Error al actualizar orden:', error);
+      alert(`Error al actualizar el estado de la orden: ${error.message}`);
     }
   };
 
