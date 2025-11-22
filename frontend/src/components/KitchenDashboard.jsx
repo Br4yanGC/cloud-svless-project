@@ -18,9 +18,8 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     try {
       setLoading(true);
       const response = await apiRequest(API_CONFIG.ENDPOINTS.ORDERS, {
-        method: 'GET',
-        apiType: 'ORDERS'
-      });
+        method: 'GET'
+      }, 'ORDERS');
       
       console.log('📦 Órdenes recibidas del backend:', response.orders);
       console.log('📦 Total órdenes:', response.orders?.length || 0);
@@ -46,9 +45,8 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     try {
       await apiRequest(`${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: newStatus }),
-        apiType: 'ORDERS'
-      });
+        body: JSON.stringify({ status: newStatus })
+      }, 'ORDERS');
       
       // Recargar órdenes para actualizar la vista
       await loadOrders();
