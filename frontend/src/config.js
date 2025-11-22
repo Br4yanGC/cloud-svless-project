@@ -13,6 +13,7 @@ export const API_CONFIG = {
     VALIDATE: '/auth/validate',
     // Orders
     ORDERS: '/api/orders',
+    CREATE_ORDER: '/api/orders',
     ORDER_BY_ID: (id) => `/api/orders/${id}`,
     UPDATE_ORDER_STATUS: (id) => `/api/orders/${id}/status`,
     ASSIGN_ORDER: (id) => `/api/orders/${id}/assign`,

@@ -8,6 +8,7 @@ import KitchenDashboard from './components/KitchenDashboard';
 import DispatchDashboard from './components/DispatchDashboard';
 import DeliveryDashboard from './components/DeliveryDashboard';
 import AdminRestaurantDashboard from './components/AdminRestaurantDashboard';
+import { apiRequest, API_CONFIG } from './config';
 import './index.css';
 
 function App() {
@@ -63,11 +64,39 @@ function App() {
   };
 
   const handleCheckout = async (orderData) => {
-    console.log('Procesando pedido:', orderData);
-    // TODO: Implementar API call para crear orden
-    alert('Pedido realizado con éxito! (pendiente de implementar API)');
-    setCart({});
-    setShowCart(false);
+    try {
+      console.log('Procesando pedido:', orderData);
+      
+      // Preparar datos para la API
+      const payload = {
+        items: orderData.items.map(item => ({
+          productId: item.productId,
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        deliveryAddress: orderData.deliveryInfo.address,
+        customerPhone: orderData.deliveryInfo.phone,
+        notes: `${orderData.deliveryInfo.reference ? 'Ref: ' + orderData.deliveryInfo.reference + '. ' : ''}${orderData.deliveryInfo.notes || ''}`
+      };
+
+      // Llamada a la API para crear la orden
+      const response = await apiRequest(API_CONFIG.ENDPOINTS.CREATE_ORDER, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }, 'ORDERS');
+
+      console.log('✅ Pedido creado:', response);
+      
+      // Limpiar carrito y mostrar éxito
+      setCart({});
+      setShowCart(false);
+      
+      alert(`¡Pedido #${response.order.orderNumber} realizado con éxito!\n\nTotal: S/ ${response.order.total.toFixed(2)}\nTiempo estimado: 30-45 minutos`);
+    } catch (error) {
+      console.error('❌ Error al crear pedido:', error);
+      alert(`Error al procesar el pedido: ${error.message || 'Inténtalo de nuevo'}`);
+    }
   };
 
   return (
