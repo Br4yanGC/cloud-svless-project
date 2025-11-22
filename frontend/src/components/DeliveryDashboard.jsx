@@ -53,15 +53,20 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
       }, 'ORDERS');
       
       console.log('📦 Todas las órdenes:', response.orders);
+      console.log('👤 Current User ID:', currentUser?.id);
       
       // Filtrar órdenes asignadas a este repartidor
-      const myDeliveries = response.orders.filter(order => 
-        order.deliveryPerson && 
-        order.deliveryPerson.id === currentUser?.id &&
-        (order.status === 'en_camino' || order.status === 'entregado')
-      );
+      const myDeliveries = response.orders.filter(order => {
+        const hasDeliveryPerson = order.deliveryPerson && order.deliveryPerson.id === currentUser?.id;
+        console.log(`Orden ${order.id}:`, {
+          deliveryPerson: order.deliveryPerson,
+          status: order.status,
+          match: hasDeliveryPerson
+        });
+        return hasDeliveryPerson;
+      });
       
-      console.log('🚗 Mis entregas:', myDeliveries);
+      console.log('🚗 Mis entregas filtradas:', myDeliveries);
       setMyOrders(myDeliveries);
     } catch (error) {
       console.error('Error al cargar mis órdenes:', error);
@@ -101,12 +106,12 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
   };
 
   const filteredOrders = myOrders.filter(order => {
-    if (filter === 'assigned') return order.status === 'en_camino';
+    if (filter === 'assigned') return order.status === 'en_camino' || order.status === 'empacado';
     if (filter === 'delivered') return order.status === 'entregado';
     return true;
   });
 
-  const assignedCount = myOrders.filter(o => o.status === 'en_camino').length;
+  const assignedCount = myOrders.filter(o => o.status === 'en_camino' || o.status === 'empacado').length;
   const deliveredCount = myOrders.filter(o => o.status === 'entregado').length;
 
   return (
@@ -292,6 +297,34 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                     <Navigation size={20} />
                     <span>Abrir en Maps</span>
                   </button>
+
+                  {order.status === 'empacado' && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await apiRequest(
+                            `${API_CONFIG.ENDPOINTS.ORDERS}/${order.id}/status`,
+                            {
+                              method: 'PATCH',
+                              body: JSON.stringify({ status: 'en_camino' })
+                            },
+                            'ORDERS'
+                          );
+                          // Actualización optimista
+                          setMyOrders(myOrders.map(o => 
+                            o.id === order.id ? { ...o, status: 'en_camino' } : o
+                          ));
+                        } catch (error) {
+                          console.error('Error al iniciar reparto:', error);
+                          alert('Error al actualizar el estado del pedido');
+                        }
+                      }}
+                      className="flex-1 bg-orange-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Package size={20} />
+                      <span>Comenzar Reparto</span>
+                    </button>
+                  )}
 
                   {order.status === 'en_camino' && (
                     <button
