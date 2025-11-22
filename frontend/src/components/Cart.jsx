@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Minus, MapPin, Phone, User, LogOut } from 'lucide-react';
 
-const Cart = ({ cart, products, onBack, onCheckout, onLogout }) => {
+const Cart = ({ cart, products, onBack, onCheckout, onLogout, currentUser }) => {
   const [deliveryInfo, setDeliveryInfo] = useState({
     customerName: '',
     phone: '',
@@ -11,6 +11,17 @@ const Cart = ({ cart, products, onBack, onCheckout, onLogout }) => {
   });
 
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+
+  // Pre-llenar nombre y teléfono del usuario
+  useEffect(() => {
+    if (currentUser) {
+      setDeliveryInfo(prev => ({
+        ...prev,
+        customerName: currentUser.name || '',
+        phone: currentUser.phoneNumber || ''
+      }));
+    }
+  }, [currentUser]);
 
   const cartItems = Object.entries(cart).map(([productId, quantity]) => {
     const product = products.find(p => p.id === productId);

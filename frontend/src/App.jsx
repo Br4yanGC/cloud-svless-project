@@ -141,6 +141,7 @@ function App() {
                 onBack={handleBackToMenu}
                 onCheckout={handleCheckout}
                 onLogout={handleLogout}
+                currentUser={currentUser}
               />
             ) : (
               <ClientHome 
