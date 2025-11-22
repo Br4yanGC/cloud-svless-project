@@ -8,8 +8,10 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
   const [filter, setFilter] = useState('ready'); // ready, assigned, delivered
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedDriver, setSelectedDriver] = useState(null);
   const [drivers, setDrivers] = useState([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
+  const [assigningDriver, setAssigningDriver] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -93,6 +95,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
   const openDriverModal = (order) => {
     setSelectedOrder(order);
+    setSelectedDriver(null); // Limpiar selección anterior
     setShowDriverModal(true);
     loadDrivers();
   };
@@ -100,11 +103,14 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
   const closeDriverModal = () => {
     setShowDriverModal(false);
     setSelectedOrder(null);
+    setSelectedDriver(null);
     setDrivers([]);
   };
 
-  const assignToDriver = async (driver) => {
-    if (!selectedOrder) return;
+  const confirmAssignDriver = async () => {
+    if (!selectedOrder || !selectedDriver) return;
+    
+    setAssigningDriver(true);
     
     try {
       const response = await apiRequest(
@@ -112,10 +118,10 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
         {
           method: 'POST',
           body: JSON.stringify({ 
-            driverName: driver.name,
-            driverId: driver.id,
-            driverEmail: driver.email,
-            driverPhone: driver.phoneNumber
+            driverName: selectedDriver.name,
+            driverId: selectedDriver.id,
+            driverEmail: selectedDriver.email,
+            driverPhone: selectedDriver.phoneNumber
           })
         },
         'ORDERS'
@@ -132,16 +138,16 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
     } catch (error) {
       console.error('Error al asignar repartidor:', error);
       
-      // Cerrar modal antes de mostrar error
-      closeDriverModal();
-      
       // Manejo específico de conflicto (otro despachador asignó primero)
       if (error.status === 409 || error.statusCode === 409) {
         alert('Este pedido ya fue asignado por otro despachador. Actualizando lista...');
+        closeDriverModal();
         loadOrders(); // Recargar para obtener estado actualizado
       } else {
         alert(`Error al asignar repartidor: ${error.message || 'Intente nuevamente'}`);
       }
+    } finally {
+      setAssigningDriver(false);
     }
   };
 
@@ -395,15 +401,27 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                   {drivers.map((driver) => (
                     <button
                       key={driver.id}
-                      onClick={() => assignToDriver(driver)}
-                      className="w-full bg-gray-50 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-4 transition-all text-left group"
+                      onClick={() => setSelectedDriver(driver)}
+                      className={`w-full border-2 rounded-xl p-4 transition-all text-left ${
+                        selectedDriver?.id === driver.id
+                          ? 'bg-blue-100 border-blue-500 shadow-lg'
+                          : 'bg-gray-50 hover:bg-blue-50 border-gray-200 hover:border-blue-400'
+                      }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="bg-blue-100 group-hover:bg-blue-200 rounded-full p-3 transition-colors">
+                        <div className={`rounded-full p-3 transition-colors ${
+                          selectedDriver?.id === driver.id
+                            ? 'bg-blue-200'
+                            : 'bg-blue-100'
+                        }`}>
                           <Truck className="text-blue-600" size={24} />
                         </div>
                         <div className="flex-1">
-                          <p className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">
+                          <p className={`font-bold transition-colors ${
+                            selectedDriver?.id === driver.id
+                              ? 'text-blue-700'
+                              : 'text-gray-800'
+                          }`}>
                             {driver.name}
                           </p>
                           <p className="text-sm text-gray-500">
@@ -415,6 +433,11 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                             </p>
                           )}
                         </div>
+                        {selectedDriver?.id === driver.id && (
+                          <div className="text-blue-600">
+                            <CheckCircle size={24} />
+                          </div>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -423,12 +446,34 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t">
+            <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t">
               <button
                 onClick={closeDriverModal}
                 className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-colors"
               >
                 Cancelar
+              </button>
+              
+              <button
+                onClick={confirmAssignDriver}
+                disabled={!selectedDriver || assigningDriver}
+                className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
+                  selectedDriver && !assigningDriver
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {assigningDriver ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Asignando...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={20} />
+                    <span>Confirmar Asignación</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
