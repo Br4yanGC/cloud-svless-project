@@ -18,6 +18,7 @@ function App() {
   const [products, setProducts] = React.useState([]);
   const [showCart, setShowCart] = React.useState(false);
   const [orderCreated, setOrderCreated] = React.useState(false);
+  const [orderConfirmation, setOrderConfirmation] = React.useState(null); // Datos del pedido confirmado
 
   // Verificar si hay sesión guardada al cargar la app
   React.useEffect(() => {
@@ -93,8 +94,7 @@ function App() {
       setCart({});
       setShowCart(false);
       setOrderCreated(true); // Marcar que se creó un pedido
-      
-      alert(`¡Pedido #${response.order.orderNumber} realizado con éxito!\n\nTotal: S/ ${response.order.total.toFixed(2)}\nTiempo estimado: 30-45 minutos`);
+      setOrderConfirmation(response.order); // Guardar datos para el modal
     } catch (error) {
       console.error('❌ Error al crear pedido:', error);
       alert(`Error al procesar el pedido: ${error.message || 'Inténtalo de nuevo'}`);
@@ -148,7 +148,11 @@ function App() {
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 orderCreated={orderCreated}
-                onOrderViewed={() => setOrderCreated(false)}
+                onOrderViewed={() => {
+                  setOrderCreated(false);
+                  setOrderConfirmation(null);
+                }}
+                orderConfirmation={orderConfirmation}
               />
             )
           } 

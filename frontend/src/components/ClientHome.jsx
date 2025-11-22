@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 
-const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed }) => {
+const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed, orderConfirmation }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -603,6 +603,58 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
             >
               Ver Carrito →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Pedido */}
+      {orderConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            {/* Header */}
+            <div className="bg-green-600 text-white p-6 rounded-t-2xl relative">
+              <button
+                onClick={onOrderViewed}
+                className="absolute top-4 right-4 text-white hover:bg-green-700 rounded-full p-1 transition-colors"
+              >
+                <X size={24} />
+              </button>
+              <div className="text-center">
+                <CheckCircle className="w-16 h-16 mx-auto mb-3" />
+                <h2 className="text-2xl font-bold">¡Pedido Confirmado!</h2>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <p className="text-gray-600 mb-2">Número de pedido</p>
+                <p className="text-3xl font-bold text-gray-900">#{orderConfirmation.orderNumber}</p>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-gray-600">Total</span>
+                  <span className="text-2xl font-bold text-green-600">S/ {orderConfirmation.total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Tiempo estimado</span>
+                  <span className="font-semibold text-gray-900">30-45 minutos</span>
+                </div>
+              </div>
+
+              <div className="text-center text-sm text-gray-600 mb-4">
+                <p>Tu pedido está siendo procesado.</p>
+                <p>Recibirás una notificación cuando esté listo.</p>
+              </div>
+
+              <button
+                onClick={onOrderViewed}
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}
