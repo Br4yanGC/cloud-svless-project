@@ -259,7 +259,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                   </ul>
                 </div>
 
-                {order.status === 'listo' && (
+                {order.status === 'empacado' && (
                   <button
                     onClick={() => {
                       const driver = prompt('Nombre del repartidor:');
