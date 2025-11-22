@@ -33,8 +33,8 @@ function Register() {
       return;
     }
 
-    if (formData.phoneNumber && formData.phoneNumber.length < 9) {
-      setError('El número de teléfono debe tener al menos 9 dígitos');
+    if (formData.phoneNumber && formData.phoneNumber.length !== 9) {
+      setError('El número de teléfono debe tener exactamente 9 dígitos');
       setLoading(false);
       return;
     }
@@ -142,16 +142,24 @@ function Register() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Teléfono
+                Teléfono (Perú)
               </label>
-              <input
-                type="tel"
-                value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                placeholder="999999999"
-              />
-              <p className="text-xs text-gray-500 mt-1">9 dígitos (sin código de país)</p>
+              <div className="flex items-center">
+                <span className="px-4 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600 font-semibold">+51</span>
+                <input
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                    setFormData({ ...formData, phoneNumber: value });
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
+                  placeholder="999999999"
+                  maxLength="9"
+                  pattern="[0-9]{9}"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Solo 9 dígitos - El código +51 se agrega automáticamente</p>
             </div>
 
             <div>

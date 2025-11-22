@@ -98,9 +98,17 @@ module.exports.registerPublic = async (event) => {
       return error(400, 'La contraseña debe tener al menos 6 caracteres');
     }
 
-    // Validar formato de teléfono si se proporciona (mínimo 9 dígitos)
-    if (phoneNumber && phoneNumber.length < 9) {
-      return error(400, 'El número de teléfono debe tener al menos 9 dígitos');
+    // Validar y formatear teléfono (debe ser exactamente 9 dígitos, agregar +51)
+    let formattedPhone = null;
+    if (phoneNumber) {
+      // Limpiar cualquier espacio o carácter no numérico
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      
+      if (cleanPhone.length !== 9) {
+        return error(400, 'El número de teléfono debe tener exactamente 9 dígitos');
+      }
+      
+      formattedPhone = `+51${cleanPhone}`;
     }
 
     // Verificar si el email ya existe
@@ -119,7 +127,7 @@ module.exports.registerPublic = async (event) => {
       name,
       role: 'cliente', // Forzar rol cliente
       code: code || null,
-      phoneNumber: phoneNumber || null,
+      phoneNumber: formattedPhone,
       email_notification: email // Usar mismo email para notificaciones
     });
 
