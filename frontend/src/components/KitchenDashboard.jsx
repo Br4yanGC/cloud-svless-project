@@ -22,10 +22,16 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
         apiType: 'ORDERS'
       });
       
+      console.log('📦 Órdenes recibidas del backend:', response.orders);
+      console.log('📦 Total órdenes:', response.orders?.length || 0);
+      
       // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado)
       const kitchenOrders = response.orders.filter(order => 
         ['recibido', 'cocinando', 'empacado'].includes(order.status)
       );
+      
+      console.log('👨‍🍳 Órdenes para cocina (recibido, cocinando, empacado):', kitchenOrders);
+      console.log('👨‍🍳 Estados encontrados:', [...new Set(response.orders.map(o => o.status))]);
       
       setOrders(kitchenOrders);
     } catch (error) {
