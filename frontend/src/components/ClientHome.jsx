@@ -50,7 +50,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       setLoadingOrders(true);
       const response = await apiRequest(`${API_CONFIG.ENDPOINTS.ORDERS}/my-orders`, {
         method: 'GET'
-      });
+      }, 'ORDERS');
       setMyOrders(response.orders || []);
     } catch (error) {
       console.error('Error loading orders:', error);

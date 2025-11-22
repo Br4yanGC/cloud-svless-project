@@ -508,17 +508,24 @@ module.exports.cancel = async (event) => {
 // Lambda: Obtener pedidos del cliente actual
 module.exports.myOrders = async (event) => {
   try {
+    console.log('myOrders - Headers:', JSON.stringify(event.headers));
+    
     // Verificar autenticación (cliente)
     const auth = await requireAuth(event, ['cliente']);
     if (!auth.authenticated) {
+      console.log('myOrders - Auth failed:', auth.error);
       return error(401, auth.error);
     }
+
+    console.log('myOrders - Auth successful for user:', auth.user.id);
 
     // Obtener pedidos del cliente
     const orders = await listOrdersByCustomer(auth.user.id);
 
     // Ordenar por fecha más reciente primero
     orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    console.log('myOrders - Returning', orders.length, 'orders');
 
     return success({ 
       orders,
