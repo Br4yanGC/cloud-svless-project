@@ -11,15 +11,11 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     loadOrders();
     
     // Conectar WebSocket para actualizaciones en tiempo real
-    const ws = new WebSocket(API_CONFIG.WEBSOCKET_URL);
+    const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=cocinero`;
+    const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
       console.log('🔌 WebSocket conectado (Cocina)');
-      ws.send(JSON.stringify({
-        action: 'subscribe',
-        role: 'cocinero',
-        type: 'kitchen-updates'
-      }));
     };
     
     ws.onmessage = (event) => {
@@ -27,7 +23,8 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
       console.log('📨 Mensaje WebSocket recibido (Cocina):', data);
       
       // Recargar órdenes cuando hay cambios
-      if (data.type === 'order-created' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+      if (data.type === 'NEW_ORDER' || data.type === 'order-created' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+        console.log('🔄 Recargando órdenes por cambio...');
         loadOrders();
       }
     };

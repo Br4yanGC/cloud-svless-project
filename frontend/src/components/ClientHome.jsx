@@ -41,16 +41,11 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       loadMyOrders();
       
       // Conectar WebSocket para actualizaciones en tiempo real
-      const ws = new WebSocket(API_CONFIG.WEBSOCKET_URL);
+      const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=${currentUser?.role}`;
+      const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {
         console.log('🔌 WebSocket conectado');
-        // Suscribirse a actualizaciones de pedidos del usuario
-        ws.send(JSON.stringify({
-          action: 'subscribe',
-          userId: currentUser?.id,
-          type: 'order-updates'
-        }));
       };
       
       ws.onmessage = (event) => {
@@ -58,7 +53,8 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
         console.log('📨 Mensaje WebSocket recibido:', data);
         
         // Si es una actualización de pedido, recargar
-        if (data.type === 'order-updated' || data.type === 'order-status-changed') {
+        if (data.type === 'ORDER_STATUS_CHANGED' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+          console.log('🔄 Recargando pedidos por cambio de estado...');
           loadMyOrders();
         }
       };
