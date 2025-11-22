@@ -9,44 +9,63 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
 
   useEffect(() => {
     loadMyOrders();
-    const interval = setInterval(loadMyOrders, 30000);
-    return () => clearInterval(interval);
+    
+    // Conectar WebSocket para actualizaciones en tiempo real
+    const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=repartidor`;
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket conectado (Repartidor)');
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Mensaje WebSocket recibido (Repartidor):', data);
+      
+      // Recargar órdenes cuando hay cambios
+      if (data.type === 'ORDER_ASSIGNED' || data.type === 'ORDER_STATUS_CHANGED' || data.type === 'order-status-changed') {
+        console.log('🔄 Recargando órdenes por cambio...');
+        loadMyOrders();
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('❌ Error WebSocket:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('🔌 WebSocket desconectado');
+    };
+    
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, []);
 
   const loadMyOrders = async () => {
     try {
       setLoading(true);
-      // Obtener solo las órdenes asignadas a este repartidor
-      const response = await apiRequest(`${API_CONFIG.ORDERS_URL}/orders/my-assignments`, {
+      // Obtener todas las órdenes y filtrar las que tienen al repartidor actual asignado
+      const response = await apiRequest(API_CONFIG.ENDPOINTS.ORDERS, {
         method: 'GET'
-      });
+      }, 'ORDERS');
       
-      setMyOrders(response.orders || []);
+      console.log('📦 Todas las órdenes:', response.orders);
+      
+      // Filtrar órdenes asignadas a este repartidor
+      const myDeliveries = response.orders.filter(order => 
+        order.deliveryPerson && 
+        order.deliveryPerson.id === currentUser?.id &&
+        (order.status === 'en_camino' || order.status === 'entregado')
+      );
+      
+      console.log('🚗 Mis entregas:', myDeliveries);
+      setMyOrders(myDeliveries);
     } catch (error) {
       console.error('Error al cargar mis órdenes:', error);
-      // Mock data si falla la API
-      setMyOrders([
-        {
-          id: 'ORD-001',
-          customerName: 'Juan Pérez',
-          deliveryInfo: {
-            customerName: 'Juan Pérez',
-            address: 'Av. Los Pinos 123, San Isidro',
-            phone: '+51999888777',
-            reference: 'Edificio azul, Depto 302'
-          },
-          address: 'Av. Los Pinos 123, San Isidro',
-          phone: '+51999888777',
-          reference: 'Edificio azul, Depto 302',
-          items: [
-            { productName: 'Pizza Pepperoni Grande', quantity: 2 },
-            { productName: 'Coca Cola 1.5L', quantity: 1 }
-          ],
-          status: 'en_camino',
-          total: 95.80,
-          assignedAt: new Date().toISOString()
-        }
-      ]);
+      setMyOrders([]);
     } finally {
       setLoading(false);
     }
@@ -54,16 +73,22 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
 
   const markAsDelivered = async (orderId) => {
     try {
-      await apiRequest(`${API_CONFIG.ORDERS_URL}/orders/${orderId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'entregado' })
-      });
+      await apiRequest(
+        `${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`, 
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'entregado' })
+        },
+        'ORDERS'
+      );
       
+      console.log('✅ Pedido marcado como entregado');
+      
+      // Actualización optimista
       setMyOrders(myOrders.map(order => 
         order.id === orderId ? { ...order, status: 'entregado' } : order
       ));
       
-      alert('¡Pedido marcado como entregado exitosamente!');
     } catch (error) {
       console.error('Error al marcar como entregado:', error);
       alert('Error al actualizar el estado del pedido');
@@ -188,7 +213,7 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-2xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
-                    <p className="text-lg text-gray-600 font-semibold">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</p>
+                    <p className="text-lg text-gray-600 font-semibold">{order.customerName || 'Cliente'}</p>
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-bold ${
                     order.status === 'en_camino' 
@@ -205,19 +230,16 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                     <MapPin className="text-blue-600 flex-shrink-0 mt-1" size={20} />
                     <div className="flex-1">
                       <p className="font-semibold text-gray-700">Dirección de Entrega</p>
-                      <p className="text-gray-600">{order.address || order.deliveryInfo?.address || 'N/A'}</p>
-                      {(order.reference || order.deliveryInfo?.reference) && (
-                        <p className="text-sm text-gray-500 italic mt-1">Ref: {order.reference || order.deliveryInfo?.reference}</p>
-                      )}
+                      <p className="text-gray-600">{order.deliveryAddress || 'N/A'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3">
                     <Phone className="text-green-600" size={20} />
                     <div>
-                      <p className="font-semibold text-gray-700">Teléfono</p>
-                      <a href={`tel:${order.phone || order.deliveryInfo?.phone}`} className="text-blue-600 hover:underline">
-                        {order.phone || order.deliveryInfo?.phone || 'N/A'}
+                      <p className="font-semibold text-gray-700">Teléfono Cliente</p>
+                      <a href={`tel:${order.customerPhone}`} className="text-blue-600 hover:underline font-semibold">
+                        {order.customerPhone || 'N/A'}
                       </a>
                     </div>
                   </div>
@@ -231,6 +253,19 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                   </div>
                 </div>
 
+                {/* Staff Info */}
+                {(order.cook || order.dispatcher) && (
+                  <div className="bg-purple-50 rounded-lg p-4 mb-4 space-y-2">
+                    <p className="font-semibold text-purple-800 mb-2">👥 Personal Asignado:</p>
+                    {order.cook && (
+                      <p className="text-sm text-gray-700">👨‍🍳 <strong>Cocinero:</strong> {order.cook.name}</p>
+                    )}
+                    {order.dispatcher && (
+                      <p className="text-sm text-gray-700">📦 <strong>Despachador:</strong> {order.dispatcher.name}</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Items */}
                 <div className="border-t border-gray-200 pt-4 mb-4">
                   <h4 className="font-semibold text-gray-700 mb-3">📦 Productos:</h4>
@@ -238,7 +273,10 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                     {(order.items || []).map((item, index) => (
                       <li key={index} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                         <span className="font-medium text-gray-700">
-                          {item.quantity}x {item.productName}
+                          {item.quantity}x {item.name}
+                        </span>
+                        <span className="text-gray-600">
+                          S/ {(item.price * item.quantity).toFixed(2)}
                         </span>
                       </li>
                     ))}
@@ -248,7 +286,7 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                 {/* Actions */}
                 <div className="flex space-x-3">
                   <button
-                    onClick={() => openInMaps(order.address || order.deliveryInfo?.address)}
+                    onClick={() => openInMaps(order.deliveryAddress)}
                     className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <Navigation size={20} />
