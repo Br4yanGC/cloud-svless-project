@@ -490,7 +490,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                       {/* Order Header */}
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900">{order.orderNumber || `Pedido #${order.id.slice(0, 8)}`}</h3>
+                          <h3 className="text-lg font-bold text-gray-900">Pedido #{order.id.slice(0, 8)}</h3>
                           <p className="text-sm text-gray-600">
                             Completado el {new Date(order.updatedAt).toLocaleDateString('es-PE', {
                               year: 'numeric',

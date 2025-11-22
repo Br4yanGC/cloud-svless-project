@@ -231,7 +231,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
               <div key={order.id} className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">{order.orderNumber || `#${order.id.substring(0, 8)}`}</h3>
+                    <h3 className="text-xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
                     <p className="text-gray-600 font-semibold">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</p>
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>

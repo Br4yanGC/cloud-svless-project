@@ -262,7 +262,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
                 {/* Order Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">{order.orderNumber || `#${order.id.substring(0, 8)}`}</h3>
+                    <h3 className="text-xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
                     <p className="text-gray-600">{order.customerName}</p>
                     <p className="text-sm text-gray-500">{getTimeElapsed(order.createdAt)}</p>
                   </div>
