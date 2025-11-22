@@ -32,7 +32,6 @@ functions:
             headers:
               - Content-Type
               - Authorization
-            allowCredentials: true
 
   # Listar pedidos (con filtros)
   listOrders:
@@ -49,7 +48,6 @@ functions:
             headers:
               - Content-Type
               - Authorization
-            allowCredentials: true
 
   # Obtener pedido por ID
   getOrder:
@@ -66,7 +64,6 @@ functions:
             headers:
               - Content-Type
               - Authorization
-            allowCredentials: true
 
   # Actualizar estado del pedido
   updateOrderStatus:
@@ -83,7 +80,6 @@ functions:
             headers:
               - Content-Type
               - Authorization
-            allowCredentials: true
 
   # Asignar pedido a empleado
   assignOrder:

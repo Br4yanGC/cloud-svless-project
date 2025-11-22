@@ -6,8 +6,7 @@ const success = (data, statusCode = 200) => {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+      'Access-Control-Allow-Headers': 'Content-Type,Authorization'
     },
     body: JSON.stringify(data)
   };
@@ -20,8 +19,7 @@ const error = (statusCode, message, details = null) => {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+      'Access-Control-Allow-Headers': 'Content-Type,Authorization'
     },
     body: JSON.stringify({
       message,
