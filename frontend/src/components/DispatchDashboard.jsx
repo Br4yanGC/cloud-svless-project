@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, Package, Truck, CheckCircle, Clock } from 'lucide-react';
+import { LogOut, User, Package, Truck, CheckCircle, Clock, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 
 const DispatchDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ready'); // ready, assigned, delivered
+  const [showDriverModal, setShowDriverModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [drivers, setDrivers] = useState([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -68,10 +72,43 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
     }
   };
 
-  const assignToDriver = async (orderId, driverName) => {
+  const loadDrivers = async () => {
+    try {
+      setLoadingDrivers(true);
+      // Obtener lista de repartidores desde el backend
+      const response = await apiRequest(
+        `/auth/drivers`,
+        { method: 'GET' },
+        'AUTH'
+      );
+      
+      setDrivers(response.drivers || []);
+    } catch (error) {
+      console.error('Error cargando repartidores:', error);
+      setDrivers([]);
+    } finally {
+      setLoadingDrivers(false);
+    }
+  };
+
+  const openDriverModal = (order) => {
+    setSelectedOrder(order);
+    setShowDriverModal(true);
+    loadDrivers();
+  };
+
+  const closeDriverModal = () => {
+    setShowDriverModal(false);
+    setSelectedOrder(null);
+    setDrivers([]);
+  };
+
+  const assignToDriver = async (driverName) => {
+    if (!selectedOrder) return;
+    
     try {
       const response = await apiRequest(
-        `${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/assign-driver`, 
+        `${API_CONFIG.ENDPOINTS.ORDERS}/${selectedOrder.id}/assign-driver`, 
         {
           method: 'POST',
           body: JSON.stringify({ driverName })
@@ -81,11 +118,17 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
       
       console.log('✅ Repartidor asignado exitosamente');
       
+      // Cerrar modal
+      closeDriverModal();
+      
       // Actualización optimista: remover de la lista local (ya no es 'empacado')
-      setOrders(orders.filter(order => order.id !== orderId));
+      setOrders(orders.filter(order => order.id !== selectedOrder.id));
       
     } catch (error) {
       console.error('Error al asignar repartidor:', error);
+      
+      // Cerrar modal antes de mostrar error
+      closeDriverModal();
       
       // Manejo específico de conflicto (otro despachador asignó primero)
       if (error.status === 409 || error.statusCode === 409) {
@@ -96,6 +139,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
       }
     }
   };
+
 
   const getStatusColor = (status) => {
     const colors = {
@@ -272,10 +316,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
                 {order.status === 'empacado' && (
                   <button
-                    onClick={() => {
-                      const driver = prompt('Nombre del repartidor:');
-                      if (driver) assignToDriver(order.id, driver);
-                    }}
+                    onClick={() => openDriverModal(order)}
                     className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
                     Asignar Repartidor
@@ -286,6 +327,82 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
           </div>
         )}
       </div>
+
+      {/* Modal de Selección de Repartidor */}
+      {showDriverModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Asignar Repartidor</h3>
+                <p className="text-sm text-blue-100">
+                  Pedido #{selectedOrder?.id.substring(0, 8)}
+                </p>
+              </div>
+              <button
+                onClick={closeDriverModal}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {loadingDrivers ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-4">Cargando repartidores...</p>
+                </div>
+              ) : drivers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Truck className="mx-auto text-gray-400 mb-4" size={48} />
+                  <p className="text-gray-600 font-semibold">No hay repartidores disponibles</p>
+                  <p className="text-gray-500 text-sm mt-2">Contacte al administrador para registrar repartidores</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  <p className="text-gray-700 font-semibold mb-4">
+                    Selecciona un repartidor:
+                  </p>
+                  {drivers.map((driver) => (
+                    <button
+                      key={driver.id}
+                      onClick={() => assignToDriver(driver.name)}
+                      className="w-full bg-gray-50 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-4 transition-all text-left group"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-blue-100 group-hover:bg-blue-200 rounded-full p-3 transition-colors">
+                          <Truck className="text-blue-600" size={24} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">
+                            {driver.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {driver.email}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t">
+              <button
+                onClick={closeDriverModal}
+                className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

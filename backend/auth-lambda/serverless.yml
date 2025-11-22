@@ -111,6 +111,21 @@ functions:
     timeout: 10
     memorySize: 128
 
+  listDrivers:
+    handler: handlers/auth.listDrivers
+    description: List all delivery drivers (for dispatchers)
+    events:
+      - http:
+          path: auth/drivers
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+    timeout: 10
+    memorySize: 128
+
   updateUserProfile:
     handler: handlers/auth.updateUserProfile
     description: Update user profile (admin or self)

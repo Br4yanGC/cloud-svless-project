@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getUser, createUser, getUserByEmail, listAdministrators, updateUser } = require('../utils/dynamodb');
+const { getUser, createUser, getUserByEmail, listAdministrators, listUsersByRole, updateUser } = require('../utils/dynamodb');
 const { success, error, validate } = require('../utils/response');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -388,5 +388,53 @@ module.exports.updateUserProfile = async (event) => {
   } catch (err) {
     console.error('Update user error:', err);
     return error(500, 'Error al actualizar usuario', err.message);
+  }
+};
+
+// Lambda: Listar repartidores (para despachadores)
+module.exports.listDrivers = async (event) => {
+  try {
+    // Verificar autenticación
+    const authHeader = event.headers?.Authorization || event.headers?.authorization;
+    if (!authHeader) {
+      return error(401, 'Token no proporcionado');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verificar token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return error(403, 'Token inválido');
+    }
+
+    // Verificar que sea despachador, admin o superadmin
+    const allowedRoles = ['despachador', 'administrador', 'superadmin'];
+    if (!allowedRoles.includes(decoded.role)) {
+      return error(403, 'No tienes permisos para listar repartidores');
+    }
+
+    // Obtener todos los repartidores
+    const drivers = await listUsersByRole('repartidor');
+
+    // Quitar información sensible
+    const safeDrivers = drivers.map(driver => ({
+      id: driver.id,
+      name: driver.name,
+      email: driver.email,
+      phoneNumber: driver.phoneNumber,
+      createdAt: driver.createdAt
+    }));
+
+    return success({
+      drivers: safeDrivers,
+      total: safeDrivers.length
+    });
+
+  } catch (err) {
+    console.error('List drivers error:', err);
+    return error(500, 'Error al listar repartidores', err.message);
   }
 };

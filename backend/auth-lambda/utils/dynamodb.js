@@ -92,6 +92,23 @@ async function listAdministrators() {
   return result.Items || [];
 }
 
+// Listar usuarios por rol
+async function listUsersByRole(role) {
+  const command = new ScanCommand({
+    TableName: USERS_TABLE,
+    FilterExpression: '#role = :role',
+    ExpressionAttributeNames: {
+      '#role': 'role'
+    },
+    ExpressionAttributeValues: {
+      ':role': role
+    }
+  });
+
+  const result = await docClient.send(command);
+  return result.Items || [];
+}
+
 // Actualizar usuario
 async function updateUser(id, updates) {
   const { UpdateCommand } = require('@aws-sdk/lib-dynamodb');
@@ -134,5 +151,6 @@ module.exports = {
   getUserByEmail,
   updateLastLogin,
   listAdministrators,
+  listUsersByRole,
   updateUser
 };
