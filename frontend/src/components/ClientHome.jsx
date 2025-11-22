@@ -485,12 +485,14 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                       </div>
 
                       {/* Delivery Info */}
-                      {order.deliveryInfo && (
+                      {(order.deliveryAddress || order.customerPhone) && (
                         <div className="border-t border-gray-200 pt-4 mb-4">
                           <h4 className="font-semibold text-gray-900 mb-2">Información de Entrega:</h4>
-                          <p className="text-sm text-gray-600">📍 {order.deliveryInfo.address}</p>
-                          {order.deliveryInfo.phone && (
-                            <p className="text-sm text-gray-600">📞 {order.deliveryInfo.phone}</p>
+                          {order.deliveryAddress && (
+                            <p className="text-sm text-gray-600">📍 {order.deliveryAddress}</p>
+                          )}
+                          {order.customerPhone && (
+                            <p className="text-sm text-gray-600">📞 {order.customerPhone}</p>
                           )}
                         </div>
                       )}
@@ -559,6 +561,19 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                           {order.items.length} producto{order.items.length > 1 ? 's' : ''}
                         </p>
                       </div>
+
+                      {/* Delivery Info */}
+                      {(order.deliveryAddress || order.customerPhone) && (
+                        <div className="border-t border-gray-200 pt-4 mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">Información de Entrega:</h4>
+                          {order.deliveryAddress && (
+                            <p className="text-sm text-gray-600">📍 {order.deliveryAddress}</p>
+                          )}
+                          {order.customerPhone && (
+                            <p className="text-sm text-gray-600">📞 {order.customerPhone}</p>
+                          )}
+                        </div>
+                      )}
 
                       {/* Total */}
                       <div className="flex justify-between items-center">
