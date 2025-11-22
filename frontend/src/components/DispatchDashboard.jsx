@@ -240,8 +240,8 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <p className="text-gray-700"><strong>📍 Dirección:</strong> {order.address || order.deliveryInfo?.address || 'N/A'}</p>
-                  <p className="text-gray-700"><strong>📞 Teléfono:</strong> {order.phone || order.deliveryInfo?.phone || 'N/A'}</p>
+                  <p className="text-gray-700"><strong>📍 Dirección:</strong> {order.deliveryAddress || 'N/A'}</p>
+                  <p className="text-gray-700"><strong>📞 Teléfono:</strong> {order.customerPhone || 'N/A'}</p>
                   <p className="text-gray-700"><strong>💰 Total:</strong> S/ {(order.total || 0).toFixed(2)}</p>
                   {order.deliveryDriver && (
                     <p className="text-blue-700"><strong>🚗 Repartidor:</strong> {order.deliveryDriver}</p>
@@ -253,7 +253,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                   <ul className="space-y-1">
                     {(order.items || []).map((item, index) => (
                       <li key={index} className="text-gray-600">
-                        {item.quantity}x {item.productName}
+                        {item.quantity}x {item.name}
                       </li>
                     ))}
                   </ul>
