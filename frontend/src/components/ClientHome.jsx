@@ -489,10 +489,10 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                         <div className="border-t border-gray-200 pt-4 mb-4">
                           <h4 className="font-semibold text-gray-900 mb-2">Información de Entrega:</h4>
                           {order.deliveryAddress && (
-                            <p className="text-sm text-gray-600">📍 {order.deliveryAddress}</p>
+                            <p className="text-sm text-gray-600"><span className="font-semibold">Dirección:</span> {order.deliveryAddress}</p>
                           )}
                           {order.customerPhone && (
-                            <p className="text-sm text-gray-600">📞 {order.customerPhone}</p>
+                            <p className="text-sm text-gray-600"><span className="font-semibold">Teléfono:</span> {order.customerPhone}</p>
                           )}
                         </div>
                       )}
@@ -567,10 +567,10 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                         <div className="border-t border-gray-200 pt-4 mb-4">
                           <h4 className="font-semibold text-gray-900 mb-2">Información de Entrega:</h4>
                           {order.deliveryAddress && (
-                            <p className="text-sm text-gray-600">📍 {order.deliveryAddress}</p>
+                            <p className="text-sm text-gray-600"><span className="font-semibold">Dirección:</span> {order.deliveryAddress}</p>
                           )}
                           {order.customerPhone && (
-                            <p className="text-sm text-gray-600">📞 {order.customerPhone}</p>
+                            <p className="text-sm text-gray-600"><span className="font-semibold">Teléfono:</span> {order.customerPhone}</p>
                           )}
                         </div>
                       )}
