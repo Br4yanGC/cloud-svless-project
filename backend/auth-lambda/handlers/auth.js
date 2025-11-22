@@ -98,9 +98,9 @@ module.exports.registerPublic = async (event) => {
       return error(400, 'La contraseña debe tener al menos 6 caracteres');
     }
 
-    // Validar formato de teléfono si se proporciona
-    if (phoneNumber && !phoneNumber.startsWith('+51')) {
-      return error(400, 'El número de teléfono debe comenzar con +51');
+    // Validar formato de teléfono si se proporciona (mínimo 9 dígitos)
+    if (phoneNumber && phoneNumber.length < 9) {
+      return error(400, 'El número de teléfono debe tener al menos 9 dígitos');
     }
 
     // Verificar si el email ya existe
