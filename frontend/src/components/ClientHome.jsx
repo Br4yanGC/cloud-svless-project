@@ -33,9 +33,6 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
     if (orderCreated) {
       setActiveTab('orders');
       loadMyOrders();
-      if (onOrderViewed) {
-        onOrderViewed();
-      }
     }
   }, [orderCreated]);
 
