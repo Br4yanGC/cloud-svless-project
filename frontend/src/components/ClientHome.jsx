@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Plus, Minus, LogOut, User } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck } from 'lucide-react';
+import { apiRequest, API_CONFIG } from '../config';
 
 const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
   const [products, setProducts] = useState([]);
@@ -7,6 +8,9 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState({});
+  const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'orders', 'history'
+  const [myOrders, setMyOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   const categories = [
     { id: 'all', name: 'Todo', icon: '🍽️' },
@@ -19,7 +23,31 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
 
   useEffect(() => {
     loadProducts();
+    if (currentUser) {
+      loadMyOrders();
+    }
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'orders' || activeTab === 'history') {
+      loadMyOrders();
+    }
+  }, [activeTab]);
+
+  const loadMyOrders = async () => {
+    try {
+      setLoadingOrders(true);
+      const response = await apiRequest(`${API_CONFIG.ENDPOINTS.ORDERS}/my-orders`, {
+        method: 'GET'
+      });
+      setMyOrders(response.orders || []);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      setMyOrders([]);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -121,6 +149,45 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
     }, 0);
   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+      pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      en_preparacion: 'bg-orange-100 text-orange-800 border-orange-300',
+      listo: 'bg-blue-100 text-blue-800 border-blue-300',
+      en_camino: 'bg-purple-100 text-purple-800 border-purple-300',
+      entregado: 'bg-green-100 text-green-800 border-green-300'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
+  };
+
+  const getStatusIcon = (status) => {
+    const icons = {
+      pendiente: <Clock className="w-4 h-4" />,
+      en_preparacion: <UtensilsCrossed className="w-4 h-4" />,
+      listo: <CheckCircle className="w-4 h-4" />,
+      en_camino: <Truck className="w-4 h-4" />,
+      entregado: <CheckCircle className="w-4 h-4" />
+    };
+    return icons[status] || <Clock className="w-4 h-4" />;
+  };
+
+  const getStatusText = (status) => {
+    const texts = {
+      pendiente: 'Pendiente',
+      en_preparacion: 'En Preparación',
+      listo: 'Listo',
+      en_camino: 'En Camino',
+      entregado: 'Entregado'
+    };
+    return texts[status] || status;
+  };
+
+  const activeOrders = myOrders.filter(order => 
+    ['pendiente', 'en_preparacion', 'listo', 'en_camino'].includes(order.status)
+  );
+
+  const completedOrders = myOrders.filter(order => order.status === 'entregado');
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -180,110 +247,315 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mt-4 relative">
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Buscar pizzas, bebidas, entradas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
+          {/* Navigation Tabs */}
+          <div className="mt-4 flex space-x-2 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('menu')}
+              className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
+                activeTab === 'menu'
+                  ? 'bg-white text-red-600 shadow-lg'
+                  : 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
+              }`}
+            >
+              <UtensilsCrossed size={20} />
+              <span>Menú</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
+                activeTab === 'orders'
+                  ? 'bg-white text-red-600 shadow-lg'
+                  : 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
+              }`}
+            >
+              <Package size={20} />
+              <span>Mis Pedidos</span>
+              {activeOrders.length > 0 && (
+                <span className="bg-yellow-400 text-red-900 px-2 py-1 rounded-full text-xs font-bold">
+                  {activeOrders.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
+                activeTab === 'history'
+                  ? 'bg-white text-red-600 shadow-lg'
+                  : 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
+              }`}
+            >
+              <History size={20} />
+              <span>Historial</span>
+            </button>
           </div>
+
+          {/* Search Bar - Only show on menu tab */}
+          {activeTab === 'menu' && (
+            <div className="mt-4 relative">
+              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Buscar pizzas, bebidas, entradas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Categories */}
-      <div className="bg-white shadow-md sticky top-[140px] z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
-            {categories.map(category => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-6 py-3 rounded-full font-semibold whitespace-nowrap transition-all ${
-                  selectedCategory === category.id
-                    ? 'bg-red-600 text-white shadow-lg scale-105'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.name}
-              </button>
-            ))}
+      {/* Categories - Only show on menu tab */}
+      {activeTab === 'menu' && (
+        <div className="bg-white shadow-md sticky top-[140px] z-40">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`px-6 py-3 rounded-full font-semibold whitespace-nowrap transition-all ${
+                    selectedCategory === category.id
+                      ? 'bg-red-600 text-white shadow-lg scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="mr-2">{category.icon}</span>
+                  {category.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Products Grid */}
+      {/* Content based on active tab */}
       <div className="container mx-auto px-4 py-8">
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No se encontraron productos</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map(product => (
-              <div key={product.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow">
-                {/* Product Image */}
-                <div className="relative h-48 bg-gray-200">
-                  <img 
-                    src={product.imageUrl} 
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                  {product.category === 'combos' && (
-                    <div className="absolute top-2 right-2 bg-yellow-400 text-red-900 px-3 py-1 rounded-full text-xs font-bold">
-                      COMBO
-                    </div>
-                  )}
-                </div>
-
-                {/* Product Info */}
-                <div className="p-5">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-red-600">S/ {product.price.toFixed(2)}</span>
-                  </div>
-
-                  {/* Add to Cart Controls */}
-                  {cart[product.id] ? (
-                    <div className="flex items-center justify-between bg-red-600 text-white rounded-lg p-2">
-                      <button
-                        onClick={() => updateQuantity(product.id, -1)}
-                        className="p-2 hover:bg-red-700 rounded-lg transition-colors"
-                      >
-                        <Minus size={20} />
-                      </button>
-                      <span className="font-bold text-lg px-4">{cart[product.id]}</span>
-                      <button
-                        onClick={() => updateQuantity(product.id, 1)}
-                        className="p-2 hover:bg-red-700 rounded-lg transition-colors"
-                      >
-                        <Plus size={20} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => updateQuantity(product.id, 1)}
-                      className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <Plus size={20} />
-                      <span>Agregar</span>
-                    </button>
-                  )}
-                </div>
+        {activeTab === 'menu' && (
+          <>
+            {/* Products Grid */}
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No se encontraron productos</p>
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map(product => (
+                  <div key={product.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow">
+                    {/* Product Image */}
+                    <div className="relative h-48 bg-gray-200">
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                      {product.category === 'combos' && (
+                        <div className="absolute top-2 right-2 bg-yellow-400 text-red-900 px-3 py-1 rounded-full text-xs font-bold">
+                          COMBO
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="p-5">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
+                      
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-2xl font-bold text-red-600">S/ {product.price.toFixed(2)}</span>
+                      </div>
+
+                      {/* Add to Cart Controls */}
+                      {cart[product.id] ? (
+                        <div className="flex items-center justify-between bg-red-600 text-white rounded-lg p-2">
+                          <button
+                            onClick={() => updateQuantity(product.id, -1)}
+                            className="p-2 hover:bg-red-700 rounded-lg transition-colors"
+                          >
+                            <Minus size={20} />
+                          </button>
+                          <span className="font-bold text-lg px-4">{cart[product.id]}</span>
+                          <button
+                            onClick={() => updateQuantity(product.id, 1)}
+                            className="p-2 hover:bg-red-700 rounded-lg transition-colors"
+                          >
+                            <Plus size={20} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => updateQuantity(product.id, 1)}
+                          className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <Plus size={20} />
+                          <span>Agregar</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'orders' && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Mis Pedidos Activos</h2>
+              <p className="text-gray-600">Sigue el estado de tus pedidos en tiempo real</p>
+            </div>
+
+            {loadingOrders ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Cargando pedidos...</p>
+              </div>
+            ) : activeOrders.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No tienes pedidos activos</h3>
+                <p className="text-gray-600 mb-6">Explora nuestro menú y haz tu primer pedido</p>
+                <button
+                  onClick={() => setActiveTab('menu')}
+                  className="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Ver Menú
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {activeOrders.map(order => (
+                  <div key={order.id} className="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-6">
+                      {/* Order Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">Pedido #{order.id.slice(0, 8)}</h3>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border ${getStatusColor(order.status)}`}>
+                          {getStatusIcon(order.status)}
+                          <span className="font-semibold">{getStatusText(order.status)}</span>
+                        </div>
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="border-t border-gray-200 pt-4 mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Productos:</h4>
+                        <div className="space-y-2">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center">
+                              <div className="flex items-center space-x-3">
+                                <span className="text-gray-600">{item.quantity}x</span>
+                                <span className="text-gray-900">{item.name}</span>
+                              </div>
+                              <span className="font-semibold text-gray-900">S/ {item.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Delivery Info */}
+                      {order.deliveryInfo && (
+                        <div className="border-t border-gray-200 pt-4 mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">Información de Entrega:</h4>
+                          <p className="text-sm text-gray-600">📍 {order.deliveryInfo.address}</p>
+                          {order.deliveryInfo.phone && (
+                            <p className="text-sm text-gray-600">📞 {order.deliveryInfo.phone}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Total */}
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-bold text-gray-900">Total:</span>
+                          <span className="text-2xl font-bold text-red-600">S/ {order.total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Historial de Pedidos</h2>
+              <p className="text-gray-600">Revisa todos tus pedidos completados</p>
+            </div>
+
+            {loadingOrders ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Cargando historial...</p>
+              </div>
+            ) : completedOrders.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                <History className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No tienes pedidos completados</h3>
+                <p className="text-gray-600">Tu historial aparecerá aquí una vez que completes tu primer pedido</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {completedOrders.map(order => (
+                  <div key={order.id} className="bg-white rounded-xl shadow-lg overflow-hidden opacity-90">
+                    <div className="p-6">
+                      {/* Order Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">Pedido #{order.id.slice(0, 8)}</h3>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2 px-4 py-2 rounded-full border bg-green-100 text-green-800 border-green-300">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="font-semibold">Entregado</span>
+                        </div>
+                      </div>
+
+                      {/* Order Items Summary */}
+                      <div className="border-t border-gray-200 pt-4 mb-4">
+                        <p className="text-sm text-gray-600">
+                          {order.items.length} producto{order.items.length > 1 ? 's' : ''}
+                        </p>
+                      </div>
+
+                      {/* Total */}
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-gray-900">Total:</span>
+                        <span className="text-xl font-bold text-gray-900">S/ {order.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Floating Cart Summary */}
-      {getTotalItems() > 0 && (
+      {/* Floating Cart Summary - Only show on menu tab */}
+      {activeTab === 'menu' && getTotalItems() > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl border-t-4 border-red-600 p-4 z-50">
           <div className="container mx-auto flex items-center justify-between">
             <div>
