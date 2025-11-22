@@ -9,7 +9,6 @@ function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    code: '',
     phoneNumber: ''
   });
   const [error, setError] = useState('');
@@ -34,8 +33,8 @@ function Register() {
       return;
     }
 
-    if (formData.phoneNumber && !formData.phoneNumber.startsWith('+51')) {
-      setError('El número de teléfono debe comenzar con +51');
+    if (formData.phoneNumber && formData.phoneNumber.length < 9) {
+      setError('El número de teléfono debe tener al menos 9 dígitos');
       setLoading(false);
       return;
     }
@@ -48,7 +47,6 @@ function Register() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          code: formData.code || null,
           phoneNumber: formData.phoneNumber || null
         }),
         skipAuth: true // No enviar token de autenticación
@@ -144,19 +142,6 @@ function Register() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Dirección
-              </label>
-              <input
-                type="text"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                placeholder="Ej: Av. Los Pinos 123, San Isidro"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Teléfono
               </label>
               <input
@@ -164,9 +149,9 @@ function Register() {
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                placeholder="+51999999999"
+                placeholder="999999999"
               />
-              <p className="text-xs text-gray-500 mt-1">Formato: +51 seguido de 9 dígitos</p>
+              <p className="text-xs text-gray-500 mt-1">9 dígitos (sin código de país)</p>
             </div>
 
             <div>

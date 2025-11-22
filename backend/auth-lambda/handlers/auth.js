@@ -88,9 +88,10 @@ module.exports.registerPublic = async (event) => {
       return error(400, 'Email, password y name son requeridos');
     }
 
-    // Solo permitir correos de UTEC
-    if (!email.endsWith('@utec.edu.pe')) {
-      return error(400, 'Solo se permiten correos institucionales de UTEC (@utec.edu.pe)');
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return error(400, 'Formato de email inválido');
     }
 
     if (password.length < 6) {
@@ -128,7 +129,7 @@ module.exports.registerPublic = async (event) => {
     const { passwordHash: _, ...userResponse } = user;
 
     return success({
-      message: 'Cuenta de estudiante creada exitosamente. Por favor inicia sesión.',
+      message: 'Cuenta creada exitosamente. Por favor inicia sesión.',
       user: userResponse
     }, 201);
 
