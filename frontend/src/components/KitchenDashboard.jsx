@@ -82,17 +82,22 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
       const url = `${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`;
       console.log('📍 URL completa:', url);
       
+      // Actualizar optimistamente en la UI (antes de la respuesta del servidor)
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ));
+      
       await apiRequest(url, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       }, 'ORDERS');
       
       console.log('✅ Estado actualizado exitosamente');
-      // Recargar órdenes para actualizar la vista
-      await loadOrders();
     } catch (error) {
       console.error('❌ Error al actualizar orden:', error);
       alert(`Error al actualizar el estado de la orden: ${error.message}`);
+      // Revertir el cambio optimista si falla
+      loadOrders();
     }
   };
 
