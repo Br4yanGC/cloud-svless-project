@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 
-const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
+const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -27,6 +27,17 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout }) => {
       loadMyOrders();
     }
   }, []);
+
+  // Cambiar a pestaña de pedidos cuando se crea un nuevo pedido
+  useEffect(() => {
+    if (orderCreated) {
+      setActiveTab('orders');
+      loadMyOrders();
+      if (onOrderViewed) {
+        onOrderViewed();
+      }
+    }
+  }, [orderCreated]);
 
   useEffect(() => {
     if (activeTab === 'orders' || activeTab === 'history') {

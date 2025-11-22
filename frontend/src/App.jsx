@@ -17,6 +17,7 @@ function App() {
   const [cart, setCart] = React.useState({});
   const [products, setProducts] = React.useState([]);
   const [showCart, setShowCart] = React.useState(false);
+  const [orderCreated, setOrderCreated] = React.useState(false);
 
   // Verificar si hay sesión guardada al cargar la app
   React.useEffect(() => {
@@ -91,6 +92,7 @@ function App() {
       // Limpiar carrito y mostrar éxito
       setCart({});
       setShowCart(false);
+      setOrderCreated(true); // Marcar que se creó un pedido
       
       alert(`¡Pedido #${response.order.orderNumber} realizado con éxito!\n\nTotal: S/ ${response.order.total.toFixed(2)}\nTiempo estimado: 30-45 minutos`);
     } catch (error) {
@@ -145,6 +147,8 @@ function App() {
                 onAddToCart={handleAddToCart}
                 currentUser={currentUser}
                 onLogout={handleLogout}
+                orderCreated={orderCreated}
+                onOrderViewed={() => setOrderCreated(false)}
               />
             )
           } 
