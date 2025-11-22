@@ -71,7 +71,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           description: 'Deliciosa pizza con pepperoni y queso mozzarella',
           price: 45.90,
           category: 'pizzas',
-          imageUrl: 'https://via.placeholder.com/300x200/e74c3c/fff?text=Pepperoni',
+          imageUrl: '/images/products/pizza-pepperoni.jpg',
           available: true
         },
         {
@@ -80,7 +80,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           description: 'Piña, jamón y queso mozzarella',
           price: 38.90,
           category: 'pizzas',
-          imageUrl: 'https://via.placeholder.com/300x200/f39c12/fff?text=Hawaiana',
+          imageUrl: '/images/products/pizza-hawaiana.jpg',
           available: true
         },
         {
@@ -89,7 +89,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           description: 'Bebida refrescante',
           price: 8.50,
           category: 'bebidas',
-          imageUrl: 'https://via.placeholder.com/300x200/c0392b/fff?text=Coca+Cola',
+          imageUrl: '/images/products/coca-cola.jpg',
           available: true
         },
         {
@@ -98,7 +98,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           description: 'Alitas de pollo bañadas en salsa BBQ',
           price: 25.90,
           category: 'entradas',
-          imageUrl: 'https://via.placeholder.com/300x200/d35400/fff?text=Alitas',
+          imageUrl: '/images/products/alitas.jpg',
           available: true
         },
         {
@@ -107,7 +107,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           description: 'Brownie de chocolate con helado de vainilla',
           price: 15.90,
           category: 'postres',
-          imageUrl: 'https://via.placeholder.com/300x200/8e44ad/fff?text=Brownie',
+          imageUrl: '/images/products/brownie.jpg',
           available: true
         },
         {
@@ -116,7 +116,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           description: '2 Pizzas grandes + 2 bebidas 1.5L + 1 entrada',
           price: 89.90,
           category: 'combos',
-          imageUrl: 'https://via.placeholder.com/300x200/27ae60/fff?text=Combo',
+          imageUrl: '/images/products/combo-familiar.jpg',
           available: true
         }
       ];
