@@ -162,8 +162,11 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
 
   const getStatusColor = (status) => {
     const colors = {
+      recibido: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      cocinando: 'bg-orange-100 text-orange-800 border-orange-300',
       en_preparacion: 'bg-orange-100 text-orange-800 border-orange-300',
+      empacado: 'bg-blue-100 text-blue-800 border-blue-300',
       listo: 'bg-blue-100 text-blue-800 border-blue-300',
       en_camino: 'bg-purple-100 text-purple-800 border-purple-300',
       entregado: 'bg-green-100 text-green-800 border-green-300'
@@ -173,8 +176,11 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
 
   const getStatusIcon = (status) => {
     const icons = {
+      recibido: <Clock className="w-4 h-4" />,
       pendiente: <Clock className="w-4 h-4" />,
+      cocinando: <UtensilsCrossed className="w-4 h-4" />,
       en_preparacion: <UtensilsCrossed className="w-4 h-4" />,
+      empacado: <CheckCircle className="w-4 h-4" />,
       listo: <CheckCircle className="w-4 h-4" />,
       en_camino: <Truck className="w-4 h-4" />,
       entregado: <CheckCircle className="w-4 h-4" />
@@ -184,8 +190,11 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
 
   const getStatusText = (status) => {
     const texts = {
+      recibido: 'Recibido',
       pendiente: 'Pendiente',
+      cocinando: 'Cocinando',
       en_preparacion: 'En Preparación',
+      empacado: 'Empacado',
       listo: 'Listo',
       en_camino: 'En Camino',
       entregado: 'Entregado'
@@ -194,7 +203,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   };
 
   const activeOrders = myOrders.filter(order => 
-    ['pendiente', 'en_preparacion', 'listo', 'en_camino'].includes(order.status)
+    ['recibido', 'pendiente', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
   );
 
   const completedOrders = myOrders.filter(order => order.status === 'entregado');
