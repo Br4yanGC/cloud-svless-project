@@ -42,10 +42,11 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       
       // Conectar WebSocket para actualizaciones en tiempo real
       const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=${currentUser?.role}`;
+      console.log('🔌 Conectando WebSocket:', wsUrl);
       const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {
-        console.log('🔌 WebSocket conectado');
+        console.log('✅ WebSocket conectado exitosamente');
       };
       
       ws.onmessage = (event) => {
