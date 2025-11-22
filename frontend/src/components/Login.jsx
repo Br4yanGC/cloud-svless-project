@@ -41,7 +41,8 @@ function Login({ onLogin }) {
         name: user.name,
         email: user.email,
         role: user.role,
-        code: user.code || null
+        code: user.code || null,
+        phoneNumber: user.phoneNumber || null
       });
       
       // Redirigir según el rol
