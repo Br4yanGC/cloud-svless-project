@@ -536,6 +536,24 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                         </div>
                       )}
 
+                      {/* Staff Info - Mostrar quién atendió el pedido */}
+                      {(order.cook || order.deliveryPerson) && (order.status === 'en_camino' || order.status === 'entregado') && (
+                        <div className="border-t border-gray-200 pt-4 mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">Personal:</h4>
+                          {order.cook && (
+                            <p className="text-sm text-gray-600">👨‍🍳 <span className="font-semibold">Cocinero:</span> {order.cook.name}</p>
+                          )}
+                          {order.deliveryPerson && (
+                            <div className="mt-1">
+                              <p className="text-sm text-gray-600">🚗 <span className="font-semibold">Repartidor:</span> {order.deliveryPerson.name}</p>
+                              {order.deliveryPerson.phone && (
+                                <p className="text-sm text-blue-600 ml-5">📞 {order.deliveryPerson.phone}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Total */}
                       <div className="border-t border-gray-200 pt-4">
                         <div className="flex justify-between items-center">

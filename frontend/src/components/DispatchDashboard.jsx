@@ -103,7 +103,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
     setDrivers([]);
   };
 
-  const assignToDriver = async (driverName) => {
+  const assignToDriver = async (driver) => {
     if (!selectedOrder) return;
     
     try {
@@ -111,7 +111,12 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
         `${API_CONFIG.ENDPOINTS.ORDERS}/${selectedOrder.id}/assign-driver`, 
         {
           method: 'POST',
-          body: JSON.stringify({ driverName })
+          body: JSON.stringify({ 
+            driverName: driver.name,
+            driverId: driver.id,
+            driverEmail: driver.email,
+            driverPhone: driver.phoneNumber
+          })
         },
         'ORDERS'
       );
@@ -296,10 +301,31 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
                 <div className="space-y-2 mb-4">
                   <p className="text-gray-700"><strong>📍 Dirección:</strong> {order.deliveryAddress || 'N/A'}</p>
-                  <p className="text-gray-700"><strong>📞 Teléfono:</strong> {order.customerPhone || 'N/A'}</p>
+                  <p className="text-gray-700"><strong>📞 Cliente:</strong> {order.customerPhone || 'N/A'}</p>
                   <p className="text-gray-700"><strong>💰 Total:</strong> S/ {(order.total || 0).toFixed(2)}</p>
-                  {order.deliveryDriver && (
-                    <p className="text-blue-700"><strong>🚗 Repartidor:</strong> {order.deliveryDriver}</p>
+                  
+                  {/* Información del Cocinero */}
+                  {order.cook && (
+                    <p className="text-purple-700"><strong>👨‍🍳 Cocinero:</strong> {order.cook.name}</p>
+                  )}
+                  
+                  {/* Información del Repartidor (cuando está asignado) */}
+                  {order.deliveryPerson && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                      <p className="font-semibold text-blue-800 mb-1">🚗 Repartidor Asignado:</p>
+                      <p className="text-blue-700"><strong>Nombre:</strong> {order.deliveryPerson.name}</p>
+                      {order.deliveryPerson.phone && (
+                        <p className="text-blue-700"><strong>Teléfono:</strong> {order.deliveryPerson.phone}</p>
+                      )}
+                      {order.deliveryPerson.email && (
+                        <p className="text-blue-700 text-sm">{order.deliveryPerson.email}</p>
+                      )}
+                      {order.dispatcher && (
+                        <p className="text-gray-600 text-sm mt-2">
+                          <em>Asignado por: {order.dispatcher.name}</em>
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -369,7 +395,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                   {drivers.map((driver) => (
                     <button
                       key={driver.id}
-                      onClick={() => assignToDriver(driver.name)}
+                      onClick={() => assignToDriver(driver)}
                       className="w-full bg-gray-50 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-4 transition-all text-left group"
                     >
                       <div className="flex items-center space-x-3">
@@ -383,6 +409,11 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                           <p className="text-sm text-gray-500">
                             {driver.email}
                           </p>
+                          {driver.phoneNumber && (
+                            <p className="text-sm text-gray-600">
+                              📞 {driver.phoneNumber}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </button>

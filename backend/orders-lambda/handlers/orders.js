@@ -296,13 +296,26 @@ module.exports.updateStatus = async (event) => {
 
     order.timeline.push(newTimelineEntry);
 
-    // Actualizar asignaciones según el rol
+    // Actualizar asignaciones según el estado y rol
     if (newStatus === ORDER_STATES.COCINANDO && auth.user.role === 'cocinero') {
-      order.cook = { id: auth.user.id, name: auth.user.name };
-    } else if (newStatus === ORDER_STATES.EMPACADO && auth.user.role === 'despachador') {
-      order.packer = { id: auth.user.id, name: auth.user.name };
-    } else if (newStatus === ORDER_STATES.EN_CAMINO && auth.user.role === 'repartidor') {
-      order.deliveryPerson = { id: auth.user.id, name: auth.user.name };
+      // Asignar cocinero cuando empieza a preparar
+      order.cook = { 
+        id: auth.user.id, 
+        name: auth.user.name,
+        email: auth.user.email,
+        assignedAt: now
+      };
+    } else if (newStatus === ORDER_STATES.EMPACADO && (auth.user.role === 'cocinero' || auth.user.role === 'despachador')) {
+      // Si el cocinero empaca, ya tiene cook asignado
+      // Si no tiene cook asignado aún, asignarlo
+      if (!order.cook) {
+        order.cook = { 
+          id: auth.user.id, 
+          name: auth.user.name,
+          email: auth.user.email,
+          assignedAt: now
+        };
+      }
     }
 
     // Agregar al historial
@@ -592,7 +605,7 @@ module.exports.assignDriver = async (event) => {
     }
 
     const { id } = event.pathParameters;
-    const { driverName } = JSON.parse(event.body);
+    const { driverName, driverId, driverEmail, driverPhone } = JSON.parse(event.body);
 
     if (!driverName || !driverName.trim()) {
       return error(400, 'El nombre del repartidor es requerido');
@@ -619,9 +632,21 @@ module.exports.assignDriver = async (event) => {
 
     // Actualizar estado a en_camino
     order.status = ORDER_STATES.EN_CAMINO;
+    
+    // Guardar información completa del repartidor
     order.deliveryPerson = {
+      id: driverId || null,
       name: driverName,
-      assignedBy: auth.user.name,
+      email: driverEmail || null,
+      phone: driverPhone || null,
+      assignedAt: now
+    };
+
+    // Guardar información del despachador que asigna
+    order.dispatcher = {
+      id: auth.user.id,
+      name: auth.user.name,
+      email: auth.user.email,
       assignedAt: now
     };
 
@@ -629,6 +654,8 @@ module.exports.assignDriver = async (event) => {
     order.timeline.push({
       status: ORDER_STATES.EN_CAMINO,
       timestamp: now,
+      assignedBy: auth.user.name,
+      assignedTo: driverName,
       duration: null
     });
 
@@ -637,12 +664,13 @@ module.exports.assignDriver = async (event) => {
       action: 'Repartidor asignado',
       timestamp: now,
       user: `Despachador: ${auth.user.name}`,
-      details: `Repartidor: ${driverName}`
+      details: `Repartidor: ${driverName} (${driverEmail || 'sin email'})`
     });
 
     order.updatedAt = now;
 
     await updateOrder(id, order);
+
 
     // Notificar cambio de estado via WebSocket
     await notifyOrderUpdate({
