@@ -70,19 +70,30 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
 
   const assignToDriver = async (orderId, driverName) => {
     try {
-      await apiRequest(`${API_CONFIG.ORDERS_URL}/orders/${orderId}/assign`, {
-        method: 'POST',
-        body: JSON.stringify({ driverId: driverName })
-      });
+      const response = await apiRequest(
+        `${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/assign-driver`, 
+        {
+          method: 'POST',
+          body: JSON.stringify({ driverName })
+        },
+        'ORDERS'
+      );
       
-      setOrders(orders.map(order => 
-        order.id === orderId 
-          ? { ...order, status: 'en_camino', deliveryDriver: driverName } 
-          : order
-      ));
+      console.log('✅ Repartidor asignado exitosamente');
+      
+      // Actualización optimista: remover de la lista local (ya no es 'empacado')
+      setOrders(orders.filter(order => order.id !== orderId));
+      
     } catch (error) {
       console.error('Error al asignar repartidor:', error);
-      alert('Error al asignar repartidor');
+      
+      // Manejo específico de conflicto (otro despachador asignó primero)
+      if (error.status === 409 || error.statusCode === 409) {
+        alert('Este pedido ya fue asignado por otro despachador. Actualizando lista...');
+        loadOrders(); // Recargar para obtener estado actualizado
+      } else {
+        alert(`Error al asignar repartidor: ${error.message || 'Intente nuevamente'}`);
+      }
     }
   };
 

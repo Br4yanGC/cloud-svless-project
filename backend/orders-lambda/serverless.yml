@@ -98,6 +98,23 @@ functions:
               - Authorization
             allowCredentials: true
 
+  # Asignar repartidor (despachadores)
+  assignDriver:
+    handler: handlers/orders.assignDriver
+    description: Asignar repartidor a pedido empacado
+    memorySize: 128
+    timeout: 10
+    events:
+      - http:
+          path: orders/{id}/assign-driver
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
   # Mis pedidos (cliente)
   myOrders:
     handler: handlers/orders.myOrders

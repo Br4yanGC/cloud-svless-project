@@ -583,6 +583,88 @@ module.exports.dashboardMetrics = async (event) => {
   }
 };
 
+// Lambda: Asignar repartidor (específico para despachadores)
+module.exports.assignDriver = async (event) => {
+  try {
+    const auth = await requireAuth(event, ['despachador', 'admin']);
+    if (!auth.authenticated) {
+      return error(401, auth.error);
+    }
+
+    const { id } = event.pathParameters;
+    const { driverName } = JSON.parse(event.body);
+
+    if (!driverName || !driverName.trim()) {
+      return error(400, 'El nombre del repartidor es requerido');
+    }
+
+    const order = await getOrderById(id);
+    
+    if (!order) {
+      return error(404, 'Pedido no encontrado');
+    }
+
+    // VALIDACIÓN CRÍTICA: Verificar que el pedido esté en estado 'empacado'
+    if (order.status !== ORDER_STATES.EMPACADO) {
+      return error(409, {
+        message: 'Este pedido ya no está disponible para asignar',
+        currentStatus: order.status,
+        reason: order.status === 'en_camino' 
+          ? 'Ya fue asignado a un repartidor'
+          : `El pedido está en estado: ${order.status}`
+      });
+    }
+
+    const now = new Date().toISOString();
+
+    // Actualizar estado a en_camino
+    order.status = ORDER_STATES.EN_CAMINO;
+    order.deliveryPerson = {
+      name: driverName,
+      assignedBy: auth.user.name,
+      assignedAt: now
+    };
+
+    // Agregar al timeline
+    order.timeline.push({
+      status: ORDER_STATES.EN_CAMINO,
+      timestamp: now,
+      duration: null
+    });
+
+    // Agregar al historial
+    order.history.push({
+      action: 'Repartidor asignado',
+      timestamp: now,
+      user: `Despachador: ${auth.user.name}`,
+      details: `Repartidor: ${driverName}`
+    });
+
+    order.updatedAt = now;
+
+    await updateOrder(id, order);
+
+    // Notificar cambio de estado via WebSocket
+    await notifyOrderUpdate({
+      type: 'ORDER_STATUS_CHANGED',
+      order,
+      previousStatus: ORDER_STATES.EMPACADO,
+      newStatus: ORDER_STATES.EN_CAMINO
+    });
+
+    console.log(`✅ Repartidor asignado: ${driverName} al pedido ${order.orderNumber} por ${auth.user.name}`);
+
+    return success({
+      message: 'Repartidor asignado exitosamente',
+      order
+    });
+
+  } catch (err) {
+    console.error('Error asignando repartidor:', err);
+    return error(500, 'Error interno del servidor');
+  }
+};
+
 // Función auxiliar para calcular tiempo promedio
 function calculateAverageDeliveryTime(deliveredOrders) {
   if (deliveredOrders.length === 0) return 0;
