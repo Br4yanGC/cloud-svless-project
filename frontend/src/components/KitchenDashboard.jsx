@@ -17,43 +17,20 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest(`${API_CONFIG.ORDERS_URL}/orders`, {
-        method: 'GET'
+      const response = await apiRequest(API_CONFIG.ENDPOINTS.ORDERS, {
+        method: 'GET',
+        apiType: 'ORDERS'
       });
       
-      // Filtrar solo órdenes relevantes para cocina
+      // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado)
       const kitchenOrders = response.orders.filter(order => 
-        ['pendiente', 'en_preparacion', 'listo'].includes(order.status)
+        ['recibido', 'cocinando', 'empacado'].includes(order.status)
       );
       
       setOrders(kitchenOrders);
     } catch (error) {
       console.error('Error al cargar órdenes:', error);
-      // Mock data para desarrollo si falla la API
-      setOrders([
-        {
-          id: 'ORD-001',
-          customerName: 'Juan Pérez',
-          items: [
-            { productName: 'Pizza Pepperoni Grande', quantity: 2 },
-            { productName: 'Coca Cola 1.5L', quantity: 1 }
-          ],
-          status: 'pendiente',
-          createdAt: new Date().toISOString(),
-          total: 95.80
-        },
-        {
-          id: 'ORD-002',
-          customerName: 'María García',
-          items: [
-            { productName: 'Pizza Hawaiana Mediana', quantity: 1 },
-            { productName: 'Alitas BBQ', quantity: 1 }
-          ],
-          status: 'en_preparacion',
-          createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
-          total: 54.80
-        }
-      ]);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -61,15 +38,14 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await apiRequest(`${API_CONFIG.ORDERS_URL}/orders/${orderId}/status`, {
+      await apiRequest(`${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
+        apiType: 'ORDERS'
       });
       
-      // Actualizar localmente
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
+      // Recargar órdenes para actualizar la vista
+      await loadOrders();
     } catch (error) {
       console.error('Error al actualizar orden:', error);
       alert('Error al actualizar el estado de la orden');
@@ -78,18 +54,18 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'pendiente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      'en_preparacion': 'bg-blue-100 text-blue-800 border-blue-300',
-      'listo': 'bg-green-100 text-green-800 border-green-300'
+      'recibido': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      'cocinando': 'bg-blue-100 text-blue-800 border-blue-300',
+      'empacado': 'bg-green-100 text-green-800 border-green-300'
     };
     return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
   };
 
   const getStatusLabel = (status) => {
     const labels = {
-      'pendiente': 'Pendiente',
-      'en_preparacion': 'En Preparación',
-      'listo': 'Listo para Despachar'
+      'recibido': 'Recibido',
+      'cocinando': 'En Preparación',
+      'empacado': 'Listo para Despachar'
     };
     return labels[status] || status;
   };
@@ -102,15 +78,15 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
   };
 
   const filteredOrders = orders.filter(order => {
-    if (filter === 'pending') return order.status === 'pendiente';
-    if (filter === 'in-progress') return order.status === 'en_preparacion';
-    if (filter === 'completed') return order.status === 'listo';
+    if (filter === 'pending') return order.status === 'recibido';
+    if (filter === 'in-progress') return order.status === 'cocinando';
+    if (filter === 'completed') return order.status === 'empacado';
     return true;
   });
 
-  const pendingCount = orders.filter(o => o.status === 'pendiente').length;
-  const inProgressCount = orders.filter(o => o.status === 'en_preparacion').length;
-  const readyCount = orders.filter(o => o.status === 'listo').length;
+  const pendingCount = orders.filter(o => o.status === 'recibido').length;
+  const inProgressCount = orders.filter(o => o.status === 'cocinando').length;
+  const readyCount = orders.filter(o => o.status === 'empacado').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -237,8 +213,8 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
                 {/* Order Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">#{order.id}</h3>
-                    <p className="text-gray-600">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</p>
+                    <h3 className="text-xl font-bold text-gray-800">{order.orderNumber || `#${order.id.substring(0, 8)}`}</h3>
+                    <p className="text-gray-600">{order.customerName}</p>
                     <p className="text-sm text-gray-500">{getTimeElapsed(order.createdAt)}</p>
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
@@ -253,7 +229,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
                     {(order.items || []).map((item, index) => (
                       <li key={index} className="flex justify-between text-gray-700">
                         <span className="font-medium">
-                          {item.quantity}x {item.productName}
+                          {item.quantity}x {item.name || item.productName}
                         </span>
                       </li>
                     ))}
@@ -262,25 +238,25 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
 
                 {/* Actions */}
                 <div className="flex space-x-2 pt-4 border-t border-gray-200">
-                  {order.status === 'pendiente' && (
+                  {order.status === 'recibido' && (
                     <button
-                      onClick={() => updateOrderStatus(order.id, 'en_preparacion')}
+                      onClick={() => updateOrderStatus(order.id, 'cocinando')}
                       className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                     >
                       Comenzar Preparación
                     </button>
                   )}
                   
-                  {order.status === 'en_preparacion' && (
+                  {order.status === 'cocinando' && (
                     <button
-                      onClick={() => updateOrderStatus(order.id, 'listo')}
+                      onClick={() => updateOrderStatus(order.id, 'empacado')}
                       className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
                     >
                       Marcar como Listo
                     </button>
                   )}
 
-                  {order.status === 'listo' && (
+                  {order.status === 'empacado' && (
                     <div className="flex-1 bg-green-50 border-2 border-green-300 px-4 py-3 rounded-lg text-center">
                       <p className="text-green-700 font-semibold">✓ Esperando Despacho</p>
                     </div>
