@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, Package, Truck, CheckCircle, Clock, X } from 'lucide-react';
+import { LogOut, User, Package, Truck, CheckCircle, Clock, MapPin } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
-import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
+import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
 
 const DispatchDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
@@ -297,7 +297,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
                     <p className="text-gray-600 font-semibold">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</p>
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
-                    {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
+                    {getStatusLabel(order.status)}
                   </span>
                 </div>
 
