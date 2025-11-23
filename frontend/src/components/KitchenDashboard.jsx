@@ -253,12 +253,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
                     <h3 className="text-xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
                     <p className="text-gray-600">{order.customerName}</p>
                     <p className="text-sm text-gray-500">{getTimeElapsed(order.createdAt)}</p>
-                    {/* Mostrar quién está cocinando */}
-                    {order.cook && order.cook.id === currentUser?.id && (
-                      <p className="text-sm text-purple-600 font-semibold mt-1">
-                        👨‍🍳 Tú estás preparando este pedido
-                      </p>
-                    )}
+                    {/* Mostrar quién está cocinando solo si es otro cocinero */}
                     {order.cook && order.cook.id !== currentUser?.id && (
                       <p className="text-sm text-gray-500 mt-1">
                         👨‍🍳 Cocinero: {order.cook.name}
