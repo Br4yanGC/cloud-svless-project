@@ -23,7 +23,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
       console.log('📨 Mensaje WebSocket recibido (Cocina):', data);
       
       // Recargar órdenes cuando hay cambios
-      if (data.type === 'NEW_ORDER' || data.type === 'order-created' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+      if (data.type === 'NEW_ORDER' || data.type === 'ORDER_STATUS_CHANGED' || data.type === 'ORDER_ASSIGNED' || data.type === 'order-created' || data.type === 'order-updated' || data.type === 'order-status-changed') {
         console.log('🔄 Recargando órdenes por cambio...');
         loadOrders();
       }
