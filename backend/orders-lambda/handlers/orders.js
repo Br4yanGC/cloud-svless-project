@@ -446,6 +446,15 @@ module.exports.assign = async (event) => {
 
     await updateOrder(id, order);
 
+    // Broadcast a todos los usuarios conectados
+    await broadcastToAll({
+      type: 'ORDER_ASSIGNED',
+      order: order,
+      role: role,
+      employee: employeeInfo,
+      message: `Pedido ${order.orderNumber} asignado a ${role}: ${employeeName}`
+    });
+
     // Notificar al restaurante
     await notifyRestaurantStaff({
       type: 'ORDER_ASSIGNED',
@@ -709,10 +718,18 @@ module.exports.assignDriver = async (event) => {
 
     await updateOrder(id, order);
 
-
-    // Notificar cambio de estado via WebSocket
-    await notifyOrderUpdate({
+    // Notificar a TODOS los usuarios conectados via WebSocket (broadcast)
+    await broadcastToAll({
       type: 'ORDER_STATUS_CHANGED',
+      order: order,
+      previousStatus: ORDER_STATES.EMPACADO,
+      newStatus: ORDER_STATES.EN_CAMINO,
+      message: `Pedido ${order.orderNumber} asignado a repartidor: ${driverName}`
+    });
+
+    // También notificar específicamente al cliente y al repartidor
+    await notifyOrderUpdate({
+      type: 'ORDER_ASSIGNED',
       order,
       previousStatus: ORDER_STATES.EMPACADO,
       newStatus: ORDER_STATES.EN_CAMINO
