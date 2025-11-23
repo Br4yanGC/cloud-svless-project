@@ -60,12 +60,12 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
         console.log(`📋 Orden: ${order.orderNumber} - ID: ${order.id} - Estado: ${order.status}`);
       });
       
-      // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado, en_camino)
+      // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado, en_camino, entregado)
       const kitchenOrders = response.orders.filter(order => 
-        ['recibido', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
+        ['recibido', 'cocinando', 'empacado', 'en_camino', 'entregado'].includes(order.status)
       );
       
-      console.log('👨‍🍳 Órdenes para cocina (recibido, cocinando, empacado, en_camino):', kitchenOrders);
+      console.log('👨‍🍳 Órdenes para cocina (recibido, cocinando, empacado, en_camino, entregado):', kitchenOrders);
       console.log('👨‍🍳 Estados encontrados:', [...new Set(response.orders.map(o => o.status))]);
       
       setOrders(kitchenOrders);
