@@ -10,9 +10,12 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
     activeOrders: 0,
     totalCustomers: 0,
     pendingOrders: 0,
-    completedOrders: 0
+    completedOrders: 0,
+    confirmedRevenue: 0, // Ingresos de pedidos entregados
+    potentialRevenue: 0  // Ingresos de pedidos pendientes
   });
-  const [recentOrders, setRecentOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('overview'); // overview, orders, menu, users
 
@@ -41,12 +44,12 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
       
       // Cargar órdenes recientes
       try {
-        const ordersResponse = await apiRequest(`${API_CONFIG.ORDERS_URL}/orders`, {
+        const ordersResponse = await apiRequest(API_CONFIG.ENDPOINTS.ORDERS, {
           method: 'GET'
-        });
+        }, 'ORDERS');
         
         if (ordersResponse.orders && Array.isArray(ordersResponse.orders)) {
-          setRecentOrders(ordersResponse.orders.slice(0, 10));
+          setAllOrders(ordersResponse.orders);
           
           // Calcular estadísticas basadas en las órdenes reales
           const today = new Date().toDateString();
@@ -55,7 +58,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
           );
           
           const activeOrders = ordersResponse.orders.filter(
-            order => ['pendiente', 'en_preparacion', 'listo', 'en_camino'].includes(order.status)
+            order => ['recibido', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
           );
           
           const completedOrders = ordersResponse.orders.filter(
@@ -63,49 +66,56 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
           );
           
           const pendingOrders = ordersResponse.orders.filter(
-            order => order.status === 'pendiente'
+            order => order.status === 'recibido'
           );
           
-          const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+          // Ingresos confirmados (pedidos entregados)
+          const confirmedRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+          
+          // Ingresos potenciales (pedidos no entregados)
+          const potentialRevenue = activeOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+          
+          const todayRevenue = todayOrders
+            .filter(o => o.status === 'entregado')
+            .reduce((sum, order) => sum + (order.total || 0), 0);
+          
+          // Calcular productos más solicitados
+          const productCount = {};
+          ordersResponse.orders.forEach(order => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach(item => {
+                const key = item.name || item.productName;
+                if (key) {
+                  if (!productCount[key]) {
+                    productCount[key] = { name: key, count: 0, revenue: 0 };
+                  }
+                  productCount[key].count += item.quantity || 1;
+                  productCount[key].revenue += (item.price || 0) * (item.quantity || 1);
+                }
+              });
+            }
+          });
+          
+          const sortedProducts = Object.values(productCount)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+          
+          setTopProducts(sortedProducts);
           
           setStats({
             todayOrders: todayOrders.length,
             todayRevenue: todayRevenue,
             activeOrders: activeOrders.length,
-            totalCustomers: stats.totalCustomers || 0, // Este dato vendría del servicio de auth
+            totalCustomers: stats.totalCustomers || 0,
             pendingOrders: pendingOrders.length,
-            completedOrders: completedOrders.length
+            completedOrders: completedOrders.length,
+            confirmedRevenue: confirmedRevenue,
+            potentialRevenue: potentialRevenue
           });
         }
       } catch (ordersError) {
-        console.warn('Error al cargar órdenes, usando datos de ejemplo:', ordersError);
-        // Mantener datos de ejemplo si falla
-        setRecentOrders([
-          {
-            id: 'ORD-001',
-            customerName: 'Juan Pérez',
-            status: 'entregado',
-            total: 95.80,
-            createdAt: new Date().toISOString(),
-            items: 3
-          },
-          {
-            id: 'ORD-002',
-            customerName: 'María García',
-            status: 'en_camino',
-            total: 54.80,
-            createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
-            items: 2
-          },
-          {
-            id: 'ORD-003',
-            customerName: 'Carlos López',
-            status: 'en_preparacion',
-            total: 128.90,
-            createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
-            items: 5
-          }
-        ]);
+        console.warn('Error al cargar órdenes:', ordersError);
+        setAllOrders([]);
       }
       
     } catch (error) {
@@ -168,8 +178,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
           </div>
         ) : (
           <>
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* KPI Cards - Primera fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {/* Today's Orders */}
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
@@ -178,7 +188,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                 </div>
                 <p className="text-blue-100 text-sm font-medium">Pedidos de Hoy</p>
                 <p className="text-4xl font-bold mt-2">{stats.todayOrders}</p>
-                <p className="text-blue-100 text-xs mt-2">+{stats.pendingOrders} pendientes</p>
+                <p className="text-blue-100 text-xs mt-2">{stats.pendingOrders} pendientes • {stats.completedOrders} completados</p>
               </div>
 
               {/* Today's Revenue */}
@@ -205,17 +215,79 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                 <p className="text-orange-100 text-xs mt-2">En proceso de entrega</p>
               </div>
 
-              {/* Total Customers */}
+              {/* Completed Orders */}
               <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
-                  <Users size={32} />
-                  <Eye size={24} className="opacity-70" />
+                  <Package size={32} />
+                  <div className="bg-white bg-opacity-30 rounded-full px-3 py-1">
+                    <span className="text-sm font-bold">✓</span>
+                  </div>
                 </div>
-                <p className="text-purple-100 text-sm font-medium">Clientes Totales</p>
-                <p className="text-4xl font-bold mt-2">{stats.totalCustomers}</p>
-                <p className="text-purple-100 text-xs mt-2">Clientes registrados</p>
+                <p className="text-purple-100 text-sm font-medium">Pedidos Completados</p>
+                <p className="text-4xl font-bold mt-2">{stats.completedOrders}</p>
+                <p className="text-purple-100 text-xs mt-2">Entregas totales</p>
               </div>
             </div>
+
+            {/* KPI Cards - Segunda fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Confirmed Revenue */}
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <DollarSign size={32} />
+                  <div className="bg-white bg-opacity-30 rounded-full px-3 py-1">
+                    <span className="text-sm font-bold">✓</span>
+                  </div>
+                </div>
+                <p className="text-emerald-100 text-sm font-medium">💰 Ingresos Confirmados</p>
+                <p className="text-4xl font-bold mt-2">S/ {stats.confirmedRevenue.toFixed(2)}</p>
+                <p className="text-emerald-100 text-xs mt-2">De {stats.completedOrders} pedidos entregados</p>
+              </div>
+
+              {/* Potential Revenue */}
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <TrendingUp size={32} />
+                  <div className="bg-white bg-opacity-30 rounded-full px-3 py-1">
+                    <span className="text-sm font-bold">⏳</span>
+                  </div>
+                </div>
+                <p className="text-amber-100 text-sm font-medium">📊 Ingresos Potenciales</p>
+                <p className="text-4xl font-bold mt-2">S/ {stats.potentialRevenue.toFixed(2)}</p>
+                <p className="text-amber-100 text-xs mt-2">De {stats.activeOrders} pedidos en proceso</p>
+              </div>
+            </div>
+
+            {/* Top Products Section */}
+            {topProducts.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">🏆 Productos Más Solicitados</h3>
+                <div className="space-y-3">
+                  {topProducts.map((product, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                          index === 0 ? 'bg-yellow-500' :
+                          index === 1 ? 'bg-gray-400' :
+                          index === 2 ? 'bg-orange-500' :
+                          'bg-blue-500'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{product.name}</p>
+                          <p className="text-sm text-gray-600">{product.count} unidades vendidas</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">S/ {product.revenue.toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">Ingresos</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tabs */}
             <div className="flex space-x-2 mb-6 overflow-x-auto bg-white rounded-lg p-2 shadow">
@@ -277,34 +349,42 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
                       <p className="text-3xl font-bold text-blue-700">
-                        {recentOrders.filter(o => o.status === 'en_preparacion').length}
+                        {allOrders.filter(o => o.status === 'cocinando').length}
                       </p>
                       <p className="text-sm text-blue-600 mt-1">En Preparación</p>
                     </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                      <p className="text-3xl font-bold text-green-700">
+                        {allOrders.filter(o => o.status === 'empacado').length}
+                      </p>
+                      <p className="text-sm text-green-600 mt-1">Listos</p>
+                    </div>
                     <div className="text-center p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
                       <p className="text-3xl font-bold text-purple-700">
-                        {recentOrders.filter(o => o.status === 'listo').length}
+                        {allOrders.filter(o => o.status === 'en_camino').length}
                       </p>
-                      <p className="text-sm text-purple-600 mt-1">Listos</p>
+                      <p className="text-sm text-purple-600 mt-1">En Camino</p>
                     </div>
-                    <div className="text-center p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
-                      <p className="text-3xl font-bold text-indigo-700">
-                        {recentOrders.filter(o => o.status === 'en_camino').length}
-                      </p>
-                      <p className="text-sm text-indigo-600 mt-1">En Camino</p>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
-                      <p className="text-3xl font-bold text-green-700">{stats.completedOrders}</p>
-                      <p className="text-sm text-green-600 mt-1">Completados</p>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                      <p className="text-3xl font-bold text-gray-700">{stats.completedOrders}</p>
+                      <p className="text-sm text-gray-600 mt-1">Entregados</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Recent Orders */}
                 <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center space-x-2">
-                    <ShoppingBag className="text-red-700" size={24} />
-                    <span>Pedidos Recientes</span>
+                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <ShoppingBag className="text-red-700" size={24} />
+                      <span>Últimos 10 Pedidos</span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedTab('orders')}
+                      className="text-sm text-red-600 hover:text-red-700 font-semibold"
+                    >
+                      Ver todos →
+                    </button>
                   </h2>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -319,16 +399,16 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {recentOrders.map(order => (
+                        {allOrders.slice(0, 10).map(order => (
                           <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 font-mono text-sm">{order.id}</td>
+                            <td className="py-3 px-4 font-mono text-sm">#{order.id.slice(0, 8)}</td>
                             <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
                             <td className="py-3 px-4">
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)}`}>
                                 {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-gray-600">{order.items?.length || order.items || 0}</td>
+                            <td className="py-3 px-4 text-gray-600">{order.items?.length || 0}</td>
                             <td className="py-3 px-4 font-semibold text-green-600">S/ {(order.total || 0).toFixed(2)}</td>
                             <td className="py-3 px-4 text-gray-600 text-sm">{formatTime(order.createdAt)}</td>
                           </tr>
@@ -342,8 +422,63 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
 
             {selectedTab === 'orders' && (
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Gestión de Pedidos</h2>
-                <p className="text-gray-600">Funcionalidad de gestión de pedidos en desarrollo...</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Package className="text-red-700" size={28} />
+                    <span>Todos los Pedidos ({allOrders.length})</span>
+                  </div>
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 bg-gray-50">
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">ID Pedido</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Cliente</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Estado</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Items</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Total</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Cocinero</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Repartidor</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allOrders.map(order => (
+                        <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-4 font-mono text-sm font-semibold text-gray-900">#{order.id.slice(0, 8)}</td>
+                          <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)}`}>
+                              {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-gray-600">{order.items?.length || 0}</td>
+                          <td className="py-3 px-4 font-bold text-green-600">S/ {(order.total || 0).toFixed(2)}</td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {order.cook ? order.cook.name : '-'}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {order.deliveryPerson ? order.deliveryPerson.name : '-'}
+                          </td>
+                          <td className="py-3 px-4 text-gray-600 text-sm">
+                            {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {allOrders.length === 0 && (
+                    <div className="text-center py-12">
+                      <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">No hay pedidos registrados</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
