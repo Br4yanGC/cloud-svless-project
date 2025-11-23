@@ -43,7 +43,9 @@ const OrderTimeline = ({ order }) => {
 
   const calculateDuration = (startTime, endTime) => {
     if (!startTime || !endTime) return null;
-    return Math.round((new Date(endTime) - new Date(startTime)) / 60000);
+    const minutes = Math.round((new Date(endTime) - new Date(startTime)) / 60000);
+    // Solo mostrar si es mayor a 0 (evitar tiempos negativos por problemas de sincronización)
+    return minutes > 0 ? minutes : null;
   };
 
   return (
@@ -110,7 +112,7 @@ const OrderTimeline = ({ order }) => {
                       })}
                     </p>
                     {order.cook && (
-                      <p className="text-xs text-blue-700 mt-1 font-medium">👨‍🍳 {order.cook.name}</p>
+                      <p className="text-xs text-blue-700 mt-1 font-medium">Chef: {order.cook.name}</p>
                     )}
                   </div>
                   {order.statusTimestamps.empacado && (
@@ -173,7 +175,10 @@ const OrderTimeline = ({ order }) => {
                       })}
                     </p>
                     {order.deliveryPerson && (
-                      <p className="text-xs text-purple-700 mt-1 font-medium">🚗 {order.deliveryPerson.name}</p>
+                      <p className="text-xs text-purple-700 mt-1 font-medium">Repartidor: {order.deliveryPerson.name}</p>
+                    )}
+                    {order.dispatcher && (
+                      <p className="text-xs text-purple-600 mt-1 font-medium">Despachador: {order.dispatcher.name}</p>
                     )}
                   </div>
                   {order.statusTimestamps.entregado && (
