@@ -110,6 +110,16 @@ module.exports.create = async (event) => {
           duration: null
         }
       ],
+
+      // Timestamps de cambios de estado
+      statusTimestamps: {
+        recibido: now,
+        cocinando: null,
+        empacado: null,
+        en_camino: null,
+        entregado: null,
+        cancelado: null
+      },
       
       // Asignaciones (inicialmente null)
       cook: null,
@@ -130,7 +140,8 @@ module.exports.create = async (event) => {
       ],
       
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      deliveredAt: null
     };
 
     await createOrder(order);
@@ -347,6 +358,24 @@ module.exports.updateStatus = async (event) => {
     order.status = newStatus;
     order.updatedAt = now;
 
+    // Guardar timestamp del cambio de estado
+    if (!order.statusTimestamps) {
+      order.statusTimestamps = {
+        recibido: order.createdAt,
+        cocinando: null,
+        empacado: null,
+        en_camino: null,
+        entregado: null,
+        cancelado: null
+      };
+    }
+    order.statusTimestamps[newStatus] = now;
+
+    // Si el pedido se marca como entregado, guardar deliveredAt
+    if (newStatus === ORDER_STATES.ENTREGADO) {
+      order.deliveredAt = now;
+    }
+
     await updateOrder(id, order);
 
     // Notificar a TODOS los usuarios conectados via WebSocket (broadcast)
@@ -532,6 +561,19 @@ module.exports.cancel = async (event) => {
       details: reason || 'Sin razón especificada'
     });
     order.updatedAt = now;
+
+    // Guardar timestamp de cancelación
+    if (!order.statusTimestamps) {
+      order.statusTimestamps = {
+        recibido: order.createdAt,
+        cocinando: null,
+        empacado: null,
+        en_camino: null,
+        entregado: null,
+        cancelado: null
+      };
+    }
+    order.statusTimestamps.cancelado = now;
 
     await updateOrder(id, order);
 
