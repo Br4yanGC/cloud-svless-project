@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
-import { getStatusLabel, getStatusColor, getStatusEmoji, getStatusDescription } from '../utils/orderStatus';
+import { getStatusLabel, getStatusColor, getStatusDescription } from '../utils/orderStatus';
 
 const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed, orderConfirmation }) => {
   const [products, setProducts] = useState([]);
@@ -475,7 +475,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                           </p>
                         </div>
                         <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border-2 ${getStatusColor(order.status)}`}>
-                          <span className="font-semibold">{getStatusEmoji(order.status)} {getStatusLabel(order.status)}</span>
+                          <span className="font-semibold">{getStatusLabel(order.status)}</span>
                         </div>
                       </div>
 

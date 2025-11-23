@@ -15,7 +15,7 @@ export const getStatusLabel = (status) => {
   const labels = {
     [ORDER_STATUS.RECIBIDO]: 'Recibido',
     [ORDER_STATUS.COCINANDO]: 'En Preparación',
-    [ORDER_STATUS.EMPACADO]: 'Listo',
+    [ORDER_STATUS.EMPACADO]: 'Listo para Envío',
     [ORDER_STATUS.EN_CAMINO]: 'En Camino',
     [ORDER_STATUS.ENTREGADO]: 'Entregado',
     [ORDER_STATUS.CANCELADO]: 'Cancelado'
@@ -54,7 +54,7 @@ export const getStatusDescription = (status) => {
   const descriptions = {
     [ORDER_STATUS.RECIBIDO]: 'Tu pedido ha sido recibido y será procesado pronto',
     [ORDER_STATUS.COCINANDO]: 'Estamos preparando tu pedido con cuidado',
-    [ORDER_STATUS.EMPACADO]: 'Tu pedido está listo y será enviado pronto',
+    [ORDER_STATUS.EMPACADO]: 'Tu pedido está listo para envío',
     [ORDER_STATUS.EN_CAMINO]: 'Tu pedido está en camino a tu dirección',
     [ORDER_STATUS.ENTREGADO]: 'Tu pedido ha sido entregado',
     [ORDER_STATUS.CANCELADO]: 'Este pedido fue cancelado'
