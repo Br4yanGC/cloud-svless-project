@@ -266,7 +266,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
                     )}
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
-                    {getStatusLabel(order.status)}
+                    {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
                   </span>
                 </div>
 

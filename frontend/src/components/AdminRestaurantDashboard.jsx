@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Calendar, Eye } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
+import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
 
 const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
   const [stats, setStats] = useState({
@@ -114,29 +115,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'pendiente': 'bg-yellow-100 text-yellow-800',
-      'en_preparacion': 'bg-blue-100 text-blue-800',
-      'listo': 'bg-purple-100 text-purple-800',
-      'en_camino': 'bg-indigo-100 text-indigo-800',
-      'entregado': 'bg-green-100 text-green-800',
-      'cancelado': 'bg-red-100 text-red-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      'pendiente': 'Pendiente',
-      'en_preparacion': 'En Preparación',
-      'listo': 'Listo',
-      'en_camino': 'En Camino',
-      'entregado': 'Entregado',
-      'cancelado': 'Cancelado'
-    };
-    return labels[status] || status;
-  };
+  // Funciones de estado ahora vienen de utils/orderStatus.js
 
   const formatTime = (dateString) => {
     const date = new Date(dateString);
@@ -345,8 +324,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                             <td className="py-3 px-4 font-mono text-sm">{order.id}</td>
                             <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
                             <td className="py-3 px-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                                {getStatusLabel(order.status)}
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)}`}>
+                                {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-gray-600">{order.items?.length || order.items || 0}</td>

@@ -238,12 +238,8 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                     <h3 className="text-2xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
                     <p className="text-lg text-gray-600 font-semibold">{order.customerName || 'Cliente'}</p>
                   </div>
-                  <span className={`px-4 py-2 rounded-full text-sm font-bold ${
-                    order.status === 'en_camino' 
-                      ? 'bg-blue-100 text-blue-800 border-2 border-blue-300' 
-                      : 'bg-green-100 text-green-800 border-2 border-green-300'
-                  }`}>
-                    {order.status === 'en_camino' ? '🚗 En Camino' : '✓ Entregado'}
+                  <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(order.status)}`}>
+                    {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
                   </span>
                 </div>
 

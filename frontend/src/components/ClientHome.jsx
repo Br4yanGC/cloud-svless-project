@@ -212,19 +212,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
     }, 0);
   };
 
-  // Funciones getStatusColor y getStatusText ahora vienen de utils/orderStatus.js
-  // getStatusLabel reemplaza a getStatusText para consistencia
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      recibido: <Clock className="w-4 h-4" />,
-      cocinando: <UtensilsCrossed className="w-4 h-4" />,
-      empacado: <CheckCircle className="w-4 h-4" />,
-      en_camino: <Truck className="w-4 h-4" />,
-      entregado: <CheckCircle className="w-4 h-4" />
-    };
-    return icons[status] || <Clock className="w-4 h-4" />;
-  };
+  // Funciones de estado (label, color, emoji) vienen de utils/orderStatus.js para consistencia
 
   const activeOrders = myOrders.filter(order => 
     ['recibido', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
@@ -486,9 +474,8 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                             })}
                           </p>
                         </div>
-                        <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border ${getStatusColor(order.status)}`}>
-                          {getStatusIcon(order.status)}
-                          <span className="font-semibold">{getStatusLabel(order.status)}</span>
+                        <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border-2 ${getStatusColor(order.status)}`}>
+                          <span className="font-semibold">{getStatusEmoji(order.status)} {getStatusLabel(order.status)}</span>
                         </div>
                       </div>
 
