@@ -59,13 +59,26 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
       }, 'ORDERS');
       
       console.log('📦 Órdenes recibidas (Despacho):', response.orders);
+      console.log('👤 Usuario actual (despachador):', currentUser);
       
-      // Filtrar órdenes relevantes para despacho (empacado, en_camino, entregado)
-      const dispatchOrders = response.orders.filter(order => 
-        ['empacado', 'en_camino', 'entregado'].includes(order.status)
-      );
+      // Filtrar órdenes relevantes para despacho Y que este despachador haya asignado
+      const dispatchOrders = response.orders.filter(order => {
+        const isRelevantStatus = ['empacado', 'en_camino', 'entregado'].includes(order.status);
+        const isReady = order.status === 'empacado' && !order.dispatcher; // Listos sin asignar
+        const isMyDispatch = order.dispatcher && (order.dispatcher.id === currentUser?.id || order.dispatcher.email === currentUser?.email);
+        
+        console.log(`🔍 Orden ${order.id}:`, {
+          status: order.status,
+          dispatcher: order.dispatcher,
+          isReady,
+          isMyDispatch,
+          included: isRelevantStatus && (isReady || isMyDispatch) ? '✅' : '❌'
+        });
+        
+        return isRelevantStatus && (isReady || isMyDispatch);
+      });
       
-      console.log('👨‍💼 Órdenes para despacho:', dispatchOrders);
+      console.log('👨‍💼 Órdenes para este despachador:', dispatchOrders);
       setOrders(dispatchOrders);
     } catch (error) {
       console.error('Error al cargar órdenes:', error);

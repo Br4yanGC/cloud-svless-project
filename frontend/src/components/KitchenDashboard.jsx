@@ -54,18 +54,24 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
       
       console.log('📦 Órdenes recibidas del backend:', response.orders);
       console.log('📦 Total órdenes:', response.orders?.length || 0);
+      console.log('👤 Usuario actual (cocinero):', currentUser);
       
       // Log de IDs de órdenes para debug
       response.orders?.forEach(order => {
-        console.log(`📋 Orden: ${order.orderNumber} - ID: ${order.id} - Estado: ${order.status}`);
+        console.log(`📋 Orden: ${order.orderNumber} - ID: ${order.id} - Estado: ${order.status} - Cook:`, order.cook);
       });
       
-      // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado, en_camino, entregado)
-      const kitchenOrders = response.orders.filter(order => 
-        ['recibido', 'cocinando', 'empacado', 'en_camino', 'entregado'].includes(order.status)
-      );
+      // Filtrar solo órdenes relevantes para cocina Y que este cocinero haya tomado
+      const kitchenOrders = response.orders.filter(order => {
+        // Incluir órdenes con estado recibido (pendientes de asignar) O que este cocinero haya tomado
+        const isRelevantStatus = ['recibido', 'cocinando', 'empacado', 'en_camino', 'entregado'].includes(order.status);
+        const isPending = order.status === 'recibido'; // Pendientes sin asignar
+        const isMyCook = order.cook && (order.cook.id === currentUser?.id || order.cook.email === currentUser?.email);
+        
+        return isRelevantStatus && (isPending || isMyCook);
+      });
       
-      console.log('👨‍🍳 Órdenes para cocina (recibido, cocinando, empacado, en_camino, entregado):', kitchenOrders);
+      console.log('👨‍🍳 Órdenes para este cocinero:', kitchenOrders);
       console.log('👨‍🍳 Estados encontrados:', [...new Set(response.orders.map(o => o.status))]);
       
       setOrders(kitchenOrders);
