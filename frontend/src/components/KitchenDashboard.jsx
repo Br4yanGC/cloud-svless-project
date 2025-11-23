@@ -59,12 +59,12 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
         console.log(`📋 Orden: ${order.orderNumber} - ID: ${order.id} - Estado: ${order.status}`);
       });
       
-      // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado)
+      // Filtrar solo órdenes relevantes para cocina (recibido, cocinando, empacado, en_camino)
       const kitchenOrders = response.orders.filter(order => 
-        ['recibido', 'cocinando', 'empacado'].includes(order.status)
+        ['recibido', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
       );
       
-      console.log('👨‍🍳 Órdenes para cocina (recibido, cocinando, empacado):', kitchenOrders);
+      console.log('👨‍🍳 Órdenes para cocina (recibido, cocinando, empacado, en_camino):', kitchenOrders);
       console.log('👨‍🍳 Estados encontrados:', [...new Set(response.orders.map(o => o.status))]);
       
       setOrders(kitchenOrders);
@@ -108,7 +108,8 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     const colors = {
       'recibido': 'bg-yellow-100 text-yellow-800 border-yellow-300',
       'cocinando': 'bg-blue-100 text-blue-800 border-blue-300',
-      'empacado': 'bg-green-100 text-green-800 border-green-300'
+      'empacado': 'bg-green-100 text-green-800 border-green-300',
+      'en_camino': 'bg-purple-100 text-purple-800 border-purple-300'
     };
     return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
   };
@@ -117,7 +118,8 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     const labels = {
       'recibido': 'Recibido',
       'cocinando': 'En Preparación',
-      'empacado': 'Listo para Despachar'
+      'empacado': 'Listo para Despachar',
+      'en_camino': 'En Camino'
     };
     return labels[status] || status;
   };
@@ -132,13 +134,13 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
   const filteredOrders = orders.filter(order => {
     if (filter === 'pending') return order.status === 'recibido';
     if (filter === 'in-progress') return order.status === 'cocinando';
-    if (filter === 'completed') return order.status === 'empacado';
+    if (filter === 'completed') return order.status === 'empacado' || order.status === 'en_camino';
     return true;
   });
 
   const pendingCount = orders.filter(o => o.status === 'recibido').length;
   const inProgressCount = orders.filter(o => o.status === 'cocinando').length;
-  const readyCount = orders.filter(o => o.status === 'empacado').length;
+  const readyCount = orders.filter(o => o.status === 'empacado' || o.status === 'en_camino').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
