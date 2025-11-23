@@ -237,6 +237,28 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                   <div>
                     <h3 className="text-2xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
                     <p className="text-lg text-gray-600 font-semibold">{order.customerName || 'Cliente'}</p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-semibold">Realizado:</span> {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                          day: '2-digit',
+                          month: 'short'
+                        })} a las {new Date(order.createdAt).toLocaleTimeString('es-PE', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                      {order.deliveredAt && (
+                        <p className="text-sm text-green-700">
+                          <span className="font-semibold">✓ Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: 'short'
+                          })} a las {new Date(order.deliveredAt).toLocaleTimeString('es-PE', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(order.status)}`}>
                     {getStatusLabel(order.status)}

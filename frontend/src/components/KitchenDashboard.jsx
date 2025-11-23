@@ -255,10 +255,31 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
               <div key={order.id} className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:shadow-xl transition-shadow">
                 {/* Order Header */}
                 <div className="flex items-start justify-between mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-xl font-bold text-gray-800">Pedido #{order.id.substring(0, 8)}</h3>
                     <p className="text-gray-600">{order.customerName}</p>
-                    <p className="text-sm text-gray-500">{getTimeElapsed(order.createdAt)}</p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-semibold">Realizado:</span> {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                          day: '2-digit',
+                          month: 'short'
+                        })} a las {new Date(order.createdAt).toLocaleTimeString('es-PE', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                      {order.deliveredAt && (
+                        <p className="text-sm text-green-700">
+                          <span className="font-semibold">✓ Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: 'short'
+                          })} a las {new Date(order.deliveredAt).toLocaleTimeString('es-PE', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
+                    </div>
                     {/* Mostrar quién está cocinando solo si es otro cocinero */}
                     {order.cook && order.cook.id !== currentUser?.id && (
                       <p className="text-sm text-gray-500 mt-1">
