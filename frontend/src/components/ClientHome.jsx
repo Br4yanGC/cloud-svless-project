@@ -609,7 +609,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                           {/* Información de Tiempos */}
                           <div className="mt-2 space-y-1">
                             <p className="text-sm text-gray-600">
-                              <span className="font-semibold">📅 Realizado:</span> {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                              <span className="font-semibold">Realizado:</span> {new Date(order.createdAt).toLocaleDateString('es-PE', {
                                 day: '2-digit',
                                 month: 'short',
                                 year: 'numeric'
@@ -621,7 +621,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                             
                             {order.deliveredAt && (
                               <p className="text-sm text-green-700">
-                                <span className="font-semibold">✓ Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
+                                <span className="font-semibold">Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
                                   day: '2-digit',
                                   month: 'short',
                                   year: 'numeric'
