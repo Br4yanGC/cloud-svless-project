@@ -619,18 +619,31 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                               })}
                             </p>
                             
-                            {order.deliveredAt && (
-                              <p className="text-sm text-green-700">
-                                <span className="font-semibold">Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })} a las {new Date(order.deliveredAt).toLocaleTimeString('es-PE', {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            )}
+                            <p className="text-sm text-green-700">
+                              <span className="font-semibold">Entregado:</span> {order.deliveredAt ? (
+                                <>
+                                  {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })} a las {new Date(order.deliveredAt).toLocaleTimeString('es-PE', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </>
+                              ) : (
+                                <>
+                                  {new Date(order.updatedAt || order.createdAt).toLocaleDateString('es-PE', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })} a las {new Date(order.updatedAt || order.createdAt).toLocaleTimeString('es-PE', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </>
+                              )}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 px-4 py-2 rounded-full border bg-green-100 text-green-800 border-green-300">
