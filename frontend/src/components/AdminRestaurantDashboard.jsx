@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Calendar, Eye, X, ArrowLeft, FileText } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
+import OrderTimeline from './OrderTimeline';
 
 const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
   const [stats, setStats] = useState({
@@ -724,105 +725,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Timeline de Estados */}
-                {selectedOrder.statusTimestamps && (
-                  <div className="border border-gray-200 rounded-xl p-6 bg-gradient-to-br from-gray-50 to-white">
-                    <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
-                      <div className="bg-indigo-100 p-2 rounded-lg">
-                        <Calendar size={20} className="text-indigo-600" />
-                      </div>
-                      <span>Historial de Estados</span>
-                    </h4>
-                    <div className="space-y-3">
-                      {selectedOrder.statusTimestamps.recibido && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700 font-medium">Recibido</span>
-                          <span className="text-sm text-gray-600">
-                            {new Date(selectedOrder.statusTimestamps.recibido).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {selectedOrder.statusTimestamps.cocinando && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700 font-medium">En Preparación</span>
-                          <span className="text-sm text-gray-600">
-                            {new Date(selectedOrder.statusTimestamps.cocinando).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {selectedOrder.statusTimestamps.empacado && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700 font-medium">Listo para Envío</span>
-                          <span className="text-sm text-gray-600">
-                            {new Date(selectedOrder.statusTimestamps.empacado).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {selectedOrder.statusTimestamps.en_camino && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700 font-medium">En Camino</span>
-                          <span className="text-sm text-gray-600">
-                            {new Date(selectedOrder.statusTimestamps.en_camino).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {selectedOrder.statusTimestamps.entregado && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-green-700 font-bold">Entregado</span>
-                          <span className="text-sm font-semibold text-green-600">
-                            {new Date(selectedOrder.statusTimestamps.entregado).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      {selectedOrder.statusTimestamps.cancelado && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-red-700 font-bold">Cancelado</span>
-                          <span className="text-sm font-semibold text-red-600">
-                            {new Date(selectedOrder.statusTimestamps.cancelado).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {selectedOrder.deliveredAt && (
-                      <div className="mt-4 pt-4 border-t-2 border-green-200 bg-green-50 p-3 rounded-lg">
-                        <p className="text-xs uppercase tracking-wide text-green-700 mb-1 font-semibold">Tiempo Total de Entrega</p>
-                        <p className="text-lg font-bold text-green-700">
-                          {Math.round((new Date(selectedOrder.deliveredAt) - new Date(selectedOrder.createdAt)) / 60000)} minutos
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Timeline de Estados - Componente Separado */}
+                <OrderTimeline order={selectedOrder} />
 
                 {/* Cliente */}
                 <div className="border border-blue-200 rounded-xl p-6 bg-gradient-to-br from-blue-50 to-white">
