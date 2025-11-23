@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { requireAuth } = require('../utils/auth');
 const { success, error } = require('../utils/response');
-const { notifyOrderUpdate, notifyRestaurantStaff } = require('../utils/websocket');
+const { notifyOrderUpdate, notifyRestaurantStaff, broadcastToAll } = require('../utils/websocket');
 const { sendOrderNotification } = require('../utils/notifications');
 const {
   createOrder,

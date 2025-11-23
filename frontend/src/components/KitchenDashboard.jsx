@@ -81,21 +81,24 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
       console.log('🔄 Actualizando orden:', orderId, 'a estado:', newStatus);
       const url = `${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/status`;
       console.log('📍 URL completa:', url);
+      console.log('📦 Payload:', { status: newStatus });
       
       // Actualizar optimistamente en la UI (antes de la respuesta del servidor)
       setOrders(orders.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
       ));
       
-      await apiRequest(url, {
+      const response = await apiRequest(url, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       }, 'ORDERS');
       
-      console.log('✅ Estado actualizado exitosamente');
+      console.log('✅ Estado actualizado exitosamente:', response);
     } catch (error) {
-      console.error('❌ Error al actualizar orden:', error);
-      alert(`Error al actualizar el estado de la orden: ${error.message}`);
+      console.error('❌ Error completo:', error);
+      console.error('❌ Error mensaje:', error.message);
+      console.error('❌ Error response:', error.response);
+      alert(`Error al actualizar el estado de la orden: ${error.message || 'Error interno del servidor'}`);
       // Revertir el cambio optimista si falla
       loadOrders();
     }
