@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Calendar, Eye, X } from 'lucide-react';
+import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Calendar, Eye, X, ArrowLeft, FileText } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
 
@@ -17,7 +17,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
   const [allOrders, setAllOrders] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState('overview'); // overview, orders, history, menu, users
+  const [selectedTab, setSelectedTab] = useState('overview'); // overview, orders, menu, users
+  const [showHistoryView, setShowHistoryView] = useState(false); // Vista dedicada de historial
   const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
 
   useEffect(() => {
@@ -135,6 +136,152 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Conditional rendering: Full-page History View or Dashboard */}
+      {showHistoryView ? (
+        /* VISTA COMPLETA DE HISTORIAL */
+        <>
+          {/* Header para History View */}
+          <header className="bg-red-700 text-white shadow-lg sticky top-0 z-50">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setShowHistoryView(false)}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
+                  >
+                    <ArrowLeft size={24} />
+                  </button>
+                  <FileText size={32} />
+                  <div>
+                    <h1 className="text-2xl font-bold">Historial Completo de Pedidos</h1>
+                    <p className="text-sm text-red-100">{allOrders.length} pedidos totales</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  {currentUser && (
+                    <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
+                      <User size={20} />
+                      <div>
+                        <p className="font-medium text-sm">{currentUser.name}</p>
+                        <p className="text-xs text-red-100">Administrador</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <button
+                    onClick={onLogout}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg font-semibold transition-all flex items-center space-x-2"
+                  >
+                    <LogOut size={20} />
+                    <span className="hidden sm:inline">Salir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Contenido del Historial Completo */}
+          <div className="container mx-auto px-4 py-6">
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700 mx-auto"></div>
+                <p className="text-gray-600 mt-4">Cargando historial...</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                {/* Summary cards */}
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 border-b">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-red-700">{allOrders.length}</p>
+                      <p className="text-sm text-gray-600 mt-1">Total Pedidos</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-green-600">{stats.completedOrders}</p>
+                      <p className="text-sm text-gray-600 mt-1">Entregados</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-orange-600">{stats.activeOrders}</p>
+                      <p className="text-sm text-gray-600 mt-1">En Proceso</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-emerald-600">S/ {(stats.confirmedRevenue + stats.potentialRevenue).toFixed(2)}</p>
+                      <p className="text-sm text-gray-600 mt-1">Ingresos Totales</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabla de historial completo */}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 bg-gray-50">
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">ID Pedido</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Cliente</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Estado</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Items</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Total</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Cocinero</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Repartidor</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Fecha</th>
+                        <th className="text-left py-4 px-4 font-semibold text-gray-700">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allOrders.map(order => (
+                        <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-mono text-sm font-semibold text-gray-900">#{order.id.slice(0, 8)}</td>
+                          <td className="py-4 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
+                          <td className="py-4 px-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
+                              {getStatusLabel(order.status)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{order.items?.length || 0}</td>
+                          <td className="py-4 px-4 font-bold text-green-600">S/ {(order.total || 0).toFixed(2)}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">
+                            {order.cook ? order.cook.name : '-'}
+                          </td>
+                          <td className="py-4 px-4 text-sm text-gray-600">
+                            {order.deliveryPerson ? order.deliveryPerson.name : '-'}
+                          </td>
+                          <td className="py-4 px-4 text-gray-600 text-sm">
+                            {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                          <td className="py-4 px-4">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center space-x-1"
+                            >
+                              <Eye size={16} />
+                              <span>Ver</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {allOrders.length === 0 && (
+                    <div className="text-center py-12">
+                      <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">No hay pedidos registrados</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        /* VISTA DE DASHBOARD NORMAL */
+        <>
       {/* Header */}
       <header className="bg-red-700 text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -240,7 +387,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                     <span className="text-sm font-bold">✓</span>
                   </div>
                 </div>
-                <p className="text-emerald-100 text-sm font-medium">💰 Ingresos Confirmados</p>
+                <p className="text-emerald-100 text-sm font-medium">Ingresos Confirmados</p>
                 <p className="text-4xl font-bold mt-2">S/ {stats.confirmedRevenue.toFixed(2)}</p>
                 <p className="text-emerald-100 text-xs mt-2">De {stats.completedOrders} pedidos entregados</p>
               </div>
@@ -253,7 +400,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                     <span className="text-sm font-bold">⏳</span>
                   </div>
                 </div>
-                <p className="text-amber-100 text-sm font-medium">📊 Ingresos Potenciales</p>
+                <p className="text-amber-100 text-sm font-medium">Ingresos Potenciales</p>
                 <p className="text-4xl font-bold mt-2">S/ {stats.potentialRevenue.toFixed(2)}</p>
                 <p className="text-amber-100 text-xs mt-2">De {stats.activeOrders} pedidos en proceso</p>
               </div>
@@ -262,7 +409,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
             {/* Top Products Section */}
             {topProducts.length > 0 && (
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">🏆 Productos Más Solicitados</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Productos Más Solicitados</h3>
                 <div className="space-y-3">
                   {topProducts.map((product, index) => (
                     <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -290,57 +437,51 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
               </div>
             )}
 
-            {/* Tabs */}
+            {/* Navigation Tabs */}
             <div className="flex space-x-2 mb-6 overflow-x-auto bg-white rounded-lg p-2 shadow">
               <button
                 onClick={() => setSelectedTab('overview')}
-                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${
+                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
                   selectedTab === 'overview'
                     ? 'bg-red-700 text-white shadow-lg'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                📊 Resumen
+                <TrendingUp size={18} />
+                <span>Resumen</span>
               </button>
               <button
                 onClick={() => setSelectedTab('orders')}
-                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${
+                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
                   selectedTab === 'orders'
                     ? 'bg-red-700 text-white shadow-lg'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                📦 Pedidos Activos
-              </button>
-              <button
-                onClick={() => setSelectedTab('history')}
-                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${
-                  selectedTab === 'history'
-                    ? 'bg-red-700 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                📜 Historial Completo
+                <Package size={18} />
+                <span>Pedidos Activos</span>
               </button>
               <button
                 onClick={() => setSelectedTab('menu')}
-                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${
+                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
                   selectedTab === 'menu'
                     ? 'bg-red-700 text-white shadow-lg'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                🍕 Menú
+                <ShoppingBag size={18} />
+                <span>Menú</span>
               </button>
               <button
                 onClick={() => setSelectedTab('users')}
-                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${
+                className={`px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all flex items-center space-x-2 ${
                   selectedTab === 'users'
                     ? 'bg-red-700 text-white shadow-lg'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                👥 Usuarios
+                <Users size={18} />
+                <span>Usuarios</span>
               </button>
             </div>
 
@@ -390,12 +531,21 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                       <ShoppingBag className="text-red-700" size={24} />
                       <span>Últimos 10 Pedidos</span>
                     </div>
-                    <button
-                      onClick={() => setSelectedTab('orders')}
-                      className="text-sm text-red-600 hover:text-red-700 font-semibold"
-                    >
-                      Ver todos →
-                    </button>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => setShowHistoryView(true)}
+                        className="bg-red-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-800 transition-all flex items-center space-x-2"
+                      >
+                        <FileText size={18} />
+                        <span>Historial Completo</span>
+                      </button>
+                      <button
+                        onClick={() => setSelectedTab('orders')}
+                        className="text-sm text-red-600 hover:text-red-700 font-semibold"
+                      >
+                        Ver activos →
+                      </button>
+                    </div>
                   </h2>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -416,8 +566,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                             <td className="py-3 px-4 font-mono text-sm">#{order.id.slice(0, 8)}</td>
                             <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
                             <td className="py-3 px-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)}`}>
-                                {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
+                                {getStatusLabel(order.status)}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-gray-600">{order.items?.length || 0}</td>
@@ -470,8 +620,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                           <td className="py-3 px-4 font-mono text-sm font-semibold text-gray-900">#{order.id.slice(0, 8)}</td>
                           <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
                           <td className="py-3 px-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)}`}>
-                              {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
+                              {getStatusLabel(order.status)}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-gray-600">{order.items?.length || 0}</td>
@@ -513,78 +663,6 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
               </div>
             )}
 
-            {selectedTab === 'history' && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ShoppingBag className="text-red-700" size={28} />
-                    <span>Historial Completo ({allOrders.length} pedidos)</span>
-                  </div>
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-gray-200 bg-gray-50">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">ID Pedido</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Cliente</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Estado</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Items</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Total</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Cocinero</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Repartidor</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Fecha</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allOrders.map(order => (
-                        <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-3 px-4 font-mono text-sm font-semibold text-gray-900">#{order.id.slice(0, 8)}</td>
-                          <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)}`}>
-                              {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-gray-600">{order.items?.length || 0}</td>
-                          <td className="py-3 px-4 font-bold text-green-600">S/ {(order.total || 0).toFixed(2)}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">
-                            {order.cook ? order.cook.name : '-'}
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-600">
-                            {order.deliveryPerson ? order.deliveryPerson.name : '-'}
-                          </td>
-                          <td className="py-3 px-4 text-gray-600 text-sm">
-                            {new Date(order.createdAt).toLocaleDateString('es-PE', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </td>
-                          <td className="py-3 px-4">
-                            <button
-                              onClick={() => setSelectedOrder(order)}
-                              className="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center space-x-1"
-                            >
-                              <Eye size={16} />
-                              <span>Ver</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {allOrders.length === 0 && (
-                    <div className="text-center py-12">
-                      <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">No hay pedidos registrados</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
             {selectedTab === 'menu' && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Gestión de Menú</h2>
@@ -601,6 +679,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
           </>
         )}
       </div>
+      </>
+      )}
 
       {/* Modal de Detalles del Pedido */}
       {selectedOrder && (
@@ -624,8 +704,8 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Estado</p>
-                  <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(selectedOrder.status)}`}>
-                    {getStatusEmoji(selectedOrder.status)} {getStatusLabel(selectedOrder.status)}
+                  <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(selectedOrder.status)}`}>
+                    {getStatusLabel(selectedOrder.status)}
                   </span>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -690,13 +770,13 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
               {/* Personal Asignado */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">👨‍🍳 Cocinero</h4>
+                  <h4 className="font-bold text-gray-900 mb-2">Cocinero</h4>
                   <p className="text-gray-700">
                     {selectedOrder.cook ? selectedOrder.cook.name : 'No asignado'}
                   </p>
                 </div>
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">🚗 Repartidor</h4>
+                  <h4 className="font-bold text-gray-900 mb-2">Repartidor</h4>
                   <p className="text-gray-700">
                     {selectedOrder.deliveryPerson ? selectedOrder.deliveryPerson.name : 'No asignado'}
                   </p>
@@ -705,7 +785,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
 
               {selectedOrder.dispatcher && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">👨‍💼 Despachador</h4>
+                  <h4 className="font-bold text-gray-900 mb-2">Despachador</h4>
                   <p className="text-gray-700">{selectedOrder.dispatcher.name}</p>
                 </div>
               )}
