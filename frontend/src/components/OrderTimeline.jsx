@@ -2,7 +2,44 @@ import React from 'react';
 import { Calendar } from 'lucide-react';
 
 const OrderTimeline = ({ order }) => {
-  if (!order.statusTimestamps) return null;
+  // Si no hay statusTimestamps, mostrar mensaje informativo
+  if (!order.statusTimestamps) {
+    return (
+      <div className="border border-gray-200 rounded-xl p-6 bg-white">
+        <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+          <div className="bg-indigo-100 p-2 rounded-lg">
+            <Calendar size={20} className="text-indigo-600" />
+          </div>
+          <span>Línea de Tiempo del Pedido</span>
+        </h4>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+          <p className="text-sm text-gray-600">
+            Este es un pedido anterior al sistema de seguimiento detallado.
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            Fecha de creación: {new Date(order.createdAt).toLocaleString('es-PE', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+          {order.deliveredAt && (
+            <p className="text-xs text-green-700 mt-1">
+              Entregado: {new Date(order.deliveredAt).toLocaleString('es-PE', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const calculateDuration = (startTime, endTime) => {
     if (!startTime || !endTime) return null;
