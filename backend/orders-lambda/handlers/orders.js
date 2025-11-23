@@ -250,10 +250,21 @@ module.exports.updateStatus = async (event) => {
     }
 
     const { id } = event.pathParameters;
-    const { status: newStatus, notes } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { status: newStatus, notes } = body;
+
+    console.log('🔄 updateStatus - Datos recibidos:', {
+      orderId: id,
+      body: body,
+      newStatus,
+      notes,
+      userId: auth.user.id,
+      userRole: auth.user.role
+    });
 
     // Validar estado
     if (!Object.values(ORDER_STATES).includes(newStatus)) {
+      console.log('❌ Estado inválido:', newStatus);
       return error(400, `Estado inválido. Debe ser uno de: ${Object.values(ORDER_STATES).join(', ')}`);
     }
 
@@ -264,6 +275,13 @@ module.exports.updateStatus = async (event) => {
     }
 
     const currentStatus = order.status;
+
+    console.log('🔍 Validando transición:', {
+      currentStatus,
+      newStatus,
+      validTransitions: VALID_TRANSITIONS[currentStatus],
+      isValid: VALID_TRANSITIONS[currentStatus].includes(newStatus)
+    });
 
     // Validar transición de estado
     if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
@@ -331,7 +349,16 @@ module.exports.updateStatus = async (event) => {
 
     await updateOrder(id, order);
 
-    // Notificar al cliente via WebSocket
+    // Notificar a TODOS los usuarios conectados via WebSocket (broadcast)
+    await broadcastToAll({
+      type: 'ORDER_STATUS_CHANGED',
+      order: order,
+      previousStatus: currentStatus,
+      newStatus: newStatus,
+      message: `Pedido ${order.orderNumber} cambió a: ${newStatus}`
+    });
+
+    // También notificar específicamente al cliente
     await notifyOrderUpdate({
       orderId: id,
       customerId: order.customerId,
