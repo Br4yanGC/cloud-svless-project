@@ -531,21 +531,13 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                       <ShoppingBag className="text-red-700" size={24} />
                       <span>Últimos 10 Pedidos</span>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => setShowHistoryView(true)}
-                        className="bg-red-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-800 transition-all flex items-center space-x-2"
-                      >
-                        <FileText size={18} />
-                        <span>Historial Completo</span>
-                      </button>
-                      <button
-                        onClick={() => setSelectedTab('orders')}
-                        className="text-sm text-red-600 hover:text-red-700 font-semibold"
-                      >
-                        Ver activos →
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setShowHistoryView(true)}
+                      className="bg-red-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-800 transition-all flex items-center space-x-2"
+                    >
+                      <FileText size={18} />
+                      <span>Historial Completo</span>
+                    </button>
                   </h2>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -685,126 +677,162 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
       {/* Modal de Detalles del Pedido */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-red-700 text-white p-6 flex items-center justify-between rounded-t-xl">
-              <div>
-                <h3 className="text-2xl font-bold">Detalles del Pedido</h3>
-                <p className="text-red-100">#{selectedOrder.id.slice(0, 8)}</p>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-red-700 to-red-600 text-white p-6 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                  <ShoppingBag size={28} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold">Pedido #{selectedOrder.id.slice(0, 8)}</h3>
+                  <p className="text-red-100 text-sm">Detalles completos</p>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="text-white hover:bg-red-800 p-2 rounded-lg transition-colors"
+                className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all"
               >
                 <X size={24} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Estado y Fecha */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Estado</p>
-                  <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(selectedOrder.status)}`}>
-                    {getStatusLabel(selectedOrder.status)}
-                  </span>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Fecha del pedido</p>
-                  <p className="font-semibold text-gray-900">
-                    {new Date(selectedOrder.createdAt).toLocaleDateString('es-PE', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              {/* Cliente */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center space-x-2">
-                  <User size={20} className="text-blue-600" />
-                  <span>Información del Cliente</span>
-                </h4>
-                <div className="space-y-2">
-                  <p className="text-gray-700">
-                    <span className="font-semibold">Nombre:</span> {selectedOrder.customerName || 'Cliente'}
-                  </p>
-                  {selectedOrder.deliveryAddress && (
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Dirección:</span> {selectedOrder.deliveryAddress}
+            <div className="overflow-y-auto flex-1">
+              <div className="p-8 space-y-6">
+                {/* Estado y Fecha */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-gray-50 to-white">
+                    <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Estado del Pedido</p>
+                    <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold ${getStatusColor(selectedOrder.status)}`}>
+                      {getStatusLabel(selectedOrder.status)}
+                    </span>
+                  </div>
+                  <div className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-gray-50 to-white">
+                    <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Fecha y Hora</p>
+                    <p className="font-bold text-gray-900 text-lg">
+                      {new Date(selectedOrder.createdAt).toLocaleDateString('es-PE', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
                     </p>
-                  )}
-                  {selectedOrder.customerPhone && (
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Teléfono:</span> {selectedOrder.customerPhone}
+                    <p className="text-sm text-gray-600 mt-1">
+                      {new Date(selectedOrder.createdAt).toLocaleTimeString('es-PE', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Productos */}
-              <div>
-                <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                  <Package size={20} className="text-red-600" />
-                  <span>Productos ({selectedOrder.items?.length || 0})</span>
-                </h4>
-                <div className="space-y-3">
-                  {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{item.name}</p>
-                        <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">S/ {item.price.toFixed(2)}</p>
-                        <p className="text-sm text-green-600 font-semibold">Subtotal: S/ {(item.price * item.quantity).toFixed(2)}</p>
-                      </div>
+                {/* Cliente */}
+                <div className="border border-blue-200 rounded-xl p-6 bg-gradient-to-br from-blue-50 to-white">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <User size={20} className="text-blue-600" />
                     </div>
-                  ))}
+                    <span>Información del Cliente</span>
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Nombre</p>
+                      <p className="text-gray-900 font-semibold">{selectedOrder.customerName || 'Cliente'}</p>
+                    </div>
+                    {selectedOrder.deliveryAddress && (
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Dirección de Entrega</p>
+                        <p className="text-gray-900">{selectedOrder.deliveryAddress}</p>
+                      </div>
+                    )}
+                    {selectedOrder.customerPhone && (
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Teléfono</p>
+                        <p className="text-gray-900 font-semibold">{selectedOrder.customerPhone}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Productos */}
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+                    <div className="bg-red-100 p-2 rounded-lg">
+                      <Package size={20} className="text-red-600" />
+                    </div>
+                    <span>Productos Pedidos</span>
+                    <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">{selectedOrder.items?.length || 0}</span>
+                  </h4>
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="text-left py-3 px-4 text-xs uppercase tracking-wide text-gray-600 font-semibold">Producto</th>
+                          <th className="text-center py-3 px-4 text-xs uppercase tracking-wide text-gray-600 font-semibold">Cant.</th>
+                          <th className="text-right py-3 px-4 text-xs uppercase tracking-wide text-gray-600 font-semibold">Precio</th>
+                          <th className="text-right py-3 px-4 text-xs uppercase tracking-wide text-gray-600 font-semibold">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {selectedOrder.items?.map((item, idx) => (
+                          <tr key={idx} className="bg-white hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 font-semibold text-gray-900">{item.name}</td>
+                            <td className="py-4 px-4 text-center text-gray-700 font-medium">× {item.quantity}</td>
+                            <td className="py-4 px-4 text-right text-gray-700">S/ {item.price.toFixed(2)}</td>
+                            <td className="py-4 px-4 text-right font-bold text-gray-900">S/ {(item.price * item.quantity).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Personal Asignado */}
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+                    <div className="bg-purple-100 p-2 rounded-lg">
+                      <Users size={20} className="text-purple-600" />
+                    </div>
+                    <span>Personal Asignado</span>
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="border border-green-200 rounded-xl p-5 bg-gradient-to-br from-green-50 to-white">
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Cocinero</p>
+                      <p className="text-gray-900 font-bold text-lg">
+                        {selectedOrder.cook ? selectedOrder.cook.name : <span className="text-gray-400">No asignado</span>}
+                      </p>
+                    </div>
+                    <div className="border border-purple-200 rounded-xl p-5 bg-gradient-to-br from-purple-50 to-white">
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Repartidor</p>
+                      <p className="text-gray-900 font-bold text-lg">
+                        {selectedOrder.deliveryPerson ? selectedOrder.deliveryPerson.name : <span className="text-gray-400">No asignado</span>}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedOrder.dispatcher && (
+                    <div className="border border-amber-200 rounded-xl p-5 bg-gradient-to-br from-amber-50 to-white mt-4">
+                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Despachador</p>
+                      <p className="text-gray-900 font-bold text-lg">{selectedOrder.dispatcher.name}</p>
+                    </div>
+                  )}
+                </div>
+
               </div>
+            </div>
 
-              {/* Personal Asignado */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">Cocinero</h4>
-                  <p className="text-gray-700">
-                    {selectedOrder.cook ? selectedOrder.cook.name : 'No asignado'}
-                  </p>
+            {/* Footer con Total */}
+            <div className="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1 font-semibold">Total del Pedido</p>
+                  <p className="text-4xl font-bold text-green-600">S/ {selectedOrder.total.toFixed(2)}</p>
                 </div>
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">Repartidor</h4>
-                  <p className="text-gray-700">
-                    {selectedOrder.deliveryPerson ? selectedOrder.deliveryPerson.name : 'No asignado'}
-                  </p>
-                </div>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2"
+                >
+                  <X size={18} />
+                  <span>Cerrar</span>
+                </button>
               </div>
-
-              {selectedOrder.dispatcher && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="font-bold text-gray-900 mb-2">Despachador</h4>
-                  <p className="text-gray-700">{selectedOrder.dispatcher.name}</p>
-                </div>
-              )}
-
-              {/* Total */}
-              <div className="border-t-2 border-gray-300 pt-4">
-                <div className="flex justify-between items-center bg-green-50 p-4 rounded-lg">
-                  <span className="text-xl font-bold text-gray-900">Total:</span>
-                  <span className="text-3xl font-bold text-green-600">S/ {selectedOrder.total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Botón Cerrar */}
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="w-full bg-red-700 text-white py-3 rounded-lg font-semibold hover:bg-red-800 transition-colors"
-              >
-                Cerrar
-              </button>
             </div>
           </div>
         </div>
