@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
+import { getStatusLabel, getStatusColor, getStatusEmoji, getStatusDescription } from '../utils/orderStatus';
 
 const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed, orderConfirmation }) => {
   const [products, setProducts] = useState([]);
@@ -211,50 +212,22 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
     }, 0);
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      recibido: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      cocinando: 'bg-orange-100 text-orange-800 border-orange-300',
-      en_preparacion: 'bg-orange-100 text-orange-800 border-orange-300',
-      empacado: 'bg-blue-100 text-blue-800 border-blue-300',
-      listo: 'bg-blue-100 text-blue-800 border-blue-300',
-      en_camino: 'bg-purple-100 text-purple-800 border-purple-300',
-      entregado: 'bg-green-100 text-green-800 border-green-300'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
-  };
+  // Funciones getStatusColor y getStatusText ahora vienen de utils/orderStatus.js
+  // getStatusLabel reemplaza a getStatusText para consistencia
 
   const getStatusIcon = (status) => {
     const icons = {
       recibido: <Clock className="w-4 h-4" />,
-      pendiente: <Clock className="w-4 h-4" />,
       cocinando: <UtensilsCrossed className="w-4 h-4" />,
-      en_preparacion: <UtensilsCrossed className="w-4 h-4" />,
       empacado: <CheckCircle className="w-4 h-4" />,
-      listo: <CheckCircle className="w-4 h-4" />,
       en_camino: <Truck className="w-4 h-4" />,
       entregado: <CheckCircle className="w-4 h-4" />
     };
     return icons[status] || <Clock className="w-4 h-4" />;
   };
 
-  const getStatusText = (status) => {
-    const texts = {
-      recibido: 'Recibido',
-      pendiente: 'Pendiente',
-      cocinando: 'Cocinando',
-      en_preparacion: 'En Preparación',
-      empacado: 'Empacado',
-      listo: 'Listo',
-      en_camino: 'En Camino',
-      entregado: 'Entregado'
-    };
-    return texts[status] || status;
-  };
-
   const activeOrders = myOrders.filter(order => 
-    ['recibido', 'pendiente', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
+    ['recibido', 'cocinando', 'empacado', 'en_camino'].includes(order.status)
   );
 
   const completedOrders = myOrders.filter(order => order.status === 'entregado');
@@ -515,7 +488,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                         </div>
                         <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)}
-                          <span className="font-semibold">{getStatusText(order.status)}</span>
+                          <span className="font-semibold">{getStatusLabel(order.status)}</span>
                         </div>
                       </div>
 

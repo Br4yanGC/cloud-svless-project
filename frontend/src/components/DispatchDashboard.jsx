@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, User, Package, Truck, CheckCircle, Clock, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
+import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
 
 const DispatchDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
@@ -163,23 +164,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
   };
 
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'empacado': 'bg-green-100 text-green-800 border-green-300',
-      'en_camino': 'bg-blue-100 text-blue-800 border-blue-300',
-      'entregado': 'bg-gray-100 text-gray-800 border-gray-300'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      'empacado': 'Listo para Envío',
-      'en_camino': 'En Camino',
-      'entregado': 'Entregado'
-    };
-    return labels[status] || status;
-  };
+  // Funciones getStatusColor y getStatusLabel ahora vienen de utils/orderStatus.js
 
   const filteredOrders = orders.filter(order => {
     if (filter === 'ready') return order.status === 'empacado';

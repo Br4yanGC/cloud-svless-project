@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, User, Clock, CheckCircle, ChefHat, Package } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
+import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
 
 const KitchenDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
@@ -104,25 +105,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'recibido': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      'cocinando': 'bg-blue-100 text-blue-800 border-blue-300',
-      'empacado': 'bg-green-100 text-green-800 border-green-300',
-      'en_camino': 'bg-purple-100 text-purple-800 border-purple-300'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      'recibido': 'Recibido',
-      'cocinando': 'En Preparación',
-      'empacado': 'Listo para Despachar',
-      'en_camino': 'En Camino'
-    };
-    return labels[status] || status;
-  };
+  // Funciones getStatusColor y getStatusLabel ahora vienen de utils/orderStatus.js
 
   const getTimeElapsed = (createdAt) => {
     const minutes = Math.floor((Date.now() - new Date(createdAt)) / 60000);
