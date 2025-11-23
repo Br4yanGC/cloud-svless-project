@@ -793,26 +793,46 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                     </div>
                     <span>Personal Asignado</span>
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="border border-green-200 rounded-xl p-5 bg-gradient-to-br from-green-50 to-white">
-                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Cocinero</p>
-                      <p className="text-gray-900 font-bold text-lg">
-                        {selectedOrder.cook ? selectedOrder.cook.name : <span className="text-gray-400">No asignado</span>}
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* Cocinero */}
+                    <div className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <User size={18} className="text-green-600" />
+                        </div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Cocinero</p>
+                      </div>
+                      <p className="text-gray-900 font-bold text-base">
+                        {selectedOrder.cook ? selectedOrder.cook.name : <span className="text-gray-400 font-normal italic">No asignado</span>}
                       </p>
                     </div>
-                    <div className="border border-purple-200 rounded-xl p-5 bg-gradient-to-br from-purple-50 to-white">
-                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Repartidor</p>
-                      <p className="text-gray-900 font-bold text-lg">
-                        {selectedOrder.deliveryPerson ? selectedOrder.deliveryPerson.name : <span className="text-gray-400">No asignado</span>}
+
+                    {/* Despachador */}
+                    <div className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="bg-amber-100 p-2 rounded-lg">
+                          <User size={18} className="text-amber-600" />
+                        </div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Despachador</p>
+                      </div>
+                      <p className="text-gray-900 font-bold text-base">
+                        {selectedOrder.dispatcher ? selectedOrder.dispatcher.name : <span className="text-gray-400 font-normal italic">No asignado</span>}
+                      </p>
+                    </div>
+
+                    {/* Repartidor */}
+                    <div className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="bg-purple-100 p-2 rounded-lg">
+                          <User size={18} className="text-purple-600" />
+                        </div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Repartidor</p>
+                      </div>
+                      <p className="text-gray-900 font-bold text-base">
+                        {selectedOrder.deliveryPerson ? selectedOrder.deliveryPerson.name : <span className="text-gray-400 font-normal italic">No asignado</span>}
                       </p>
                     </div>
                   </div>
-                  {selectedOrder.dispatcher && (
-                    <div className="border border-amber-200 rounded-xl p-5 bg-gradient-to-br from-amber-50 to-white mt-4">
-                      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-semibold">Despachador</p>
-                      <p className="text-gray-900 font-bold text-lg">{selectedOrder.dispatcher.name}</p>
-                    </div>
-                  )}
                 </div>
 
               </div>
