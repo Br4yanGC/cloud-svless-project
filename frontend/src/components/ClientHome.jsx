@@ -12,6 +12,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'orders', 'history'
   const [myOrders, setMyOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
 
   const categories = [
     { id: 'all', name: 'Todo', icon: '🍽️' },
@@ -586,9 +587,15 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
 
                       {/* Order Items Summary */}
                       <div className="border-t border-gray-200 pt-4 mb-4">
-                        <p className="text-sm text-gray-600">
-                          {order.items.length} producto{order.items.length > 1 ? 's' : ''}
-                        </p>
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="text-red-600 font-semibold hover:text-red-700 transition-colors flex items-center space-x-2"
+                        >
+                          <span>Ver detalles de {order.items.length} producto{order.items.length > 1 ? 's' : ''}</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
                       </div>
 
                       {/* Delivery Info */}
@@ -682,6 +689,116 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                 className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
               >
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Detalles de Pedido */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Detalles del Pedido</h3>
+                <p className="text-sm text-gray-600">#{selectedOrder.id.slice(0, 8)}</p>
+              </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Estado y Fecha */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Fecha del pedido</p>
+                  <p className="font-semibold text-gray-900">
+                    {new Date(selectedOrder.createdAt).toLocaleDateString('es-PE', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <div className={`px-4 py-2 rounded-full border-2 ${getStatusColor(selectedOrder.status)}`}>
+                  <span className="font-semibold">{getStatusLabel(selectedOrder.status)}</span>
+                </div>
+              </div>
+
+              {/* Productos */}
+              <div>
+                <h4 className="font-bold text-gray-900 mb-4 text-lg">Productos:</h4>
+                <div className="space-y-3">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900">{item.name}</p>
+                        <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">S/ {item.price.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600">Subtotal: S/ {(item.price * item.quantity).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Información de Entrega */}
+              {(selectedOrder.deliveryAddress || selectedOrder.customerPhone) && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-bold text-gray-900 mb-3">Información de Entrega:</h4>
+                  {selectedOrder.deliveryAddress && (
+                    <p className="text-sm text-gray-700 mb-2">
+                      <span className="font-semibold">Dirección:</span> {selectedOrder.deliveryAddress}
+                    </p>
+                  )}
+                  {selectedOrder.customerPhone && (
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Teléfono:</span> {selectedOrder.customerPhone}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Personal Asignado */}
+              {(selectedOrder.cook || selectedOrder.deliveryPerson) && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-bold text-gray-900 mb-3">Personal Asignado:</h4>
+                  {selectedOrder.cook && (
+                    <p className="text-sm text-gray-700 mb-2">
+                      <span className="font-semibold">👨‍🍳 Cocinero:</span> {selectedOrder.cook.name}
+                    </p>
+                  )}
+                  {selectedOrder.deliveryPerson && (
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">🚗 Repartidor:</span> {selectedOrder.deliveryPerson.name}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Total */}
+              <div className="border-t-2 border-gray-300 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-bold text-gray-900">Total:</span>
+                  <span className="text-3xl font-bold text-red-600">S/ {selectedOrder.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Botón Cerrar */}
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                Cerrar
               </button>
             </div>
           </div>

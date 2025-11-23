@@ -117,13 +117,13 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
   const filteredOrders = orders.filter(order => {
     if (filter === 'pending') return order.status === 'recibido';
     if (filter === 'in-progress') return order.status === 'cocinando';
-    if (filter === 'completed') return order.status === 'empacado' || order.status === 'en_camino';
+    if (filter === 'completed') return order.status === 'empacado' || order.status === 'en_camino' || order.status === 'entregado';
     return true;
   });
 
   const pendingCount = orders.filter(o => o.status === 'recibido').length;
   const inProgressCount = orders.filter(o => o.status === 'cocinando').length;
-  const readyCount = orders.filter(o => o.status === 'empacado' || o.status === 'en_camino').length;
+  const readyCount = orders.filter(o => o.status === 'empacado' || o.status === 'en_camino' || o.status === 'entregado').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
