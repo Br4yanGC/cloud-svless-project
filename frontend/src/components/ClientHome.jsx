@@ -603,17 +603,35 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                     <div className="p-6">
                       {/* Order Header */}
                       <div className="flex items-center justify-between mb-4">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="text-lg font-bold text-gray-900">Pedido #{order.id.slice(0, 8)}</h3>
-                          <p className="text-sm text-gray-600">
-                            {new Date(order.createdAt).toLocaleDateString('es-PE', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
+                          
+                          {/* Información de Tiempos */}
+                          <div className="mt-2 space-y-1">
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold">📅 Realizado:</span> {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              })} a las {new Date(order.createdAt).toLocaleTimeString('es-PE', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                            
+                            {order.deliveredAt && (
+                              <p className="text-sm text-green-700">
+                                <span className="font-semibold">✓ Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })} a las {new Date(order.deliveredAt).toLocaleTimeString('es-PE', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center space-x-2 px-4 py-2 rounded-full border bg-green-100 text-green-800 border-green-300">
                           <CheckCircle className="w-4 h-4" />
