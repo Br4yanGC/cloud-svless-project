@@ -719,6 +719,19 @@ module.exports.assignDriver = async (event) => {
 
     // Actualizar estado a en_camino
     order.status = ORDER_STATES.EN_CAMINO;
+
+    // Guardar timestamp del cambio de estado
+    if (!order.statusTimestamps) {
+      order.statusTimestamps = {
+        recibido: order.createdAt,
+        cocinando: null,
+        empacado: null,
+        en_camino: null,
+        entregado: null,
+        cancelado: null
+      };
+    }
+    order.statusTimestamps.en_camino = now;
     
     // Guardar información completa del repartidor
     order.deliveryPerson = {

@@ -463,17 +463,53 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                     <div className="p-6">
                       {/* Order Header */}
                       <div className="flex items-center justify-between mb-4">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="text-lg font-bold text-gray-900">Pedido #{order.id.slice(0, 8)}</h3>
-                          <p className="text-sm text-gray-600">
-                            Completado el {new Date(order.updatedAt).toLocaleDateString('es-PE', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
+                          
+                          {/* Información de Tiempos */}
+                          <div className="mt-2 space-y-1">
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold">Realizado:</span> {new Date(order.createdAt).toLocaleDateString('es-PE', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              })} a las {new Date(order.createdAt).toLocaleTimeString('es-PE', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                            
+                            {order.deliveredAt ? (
+                              <p className="text-sm text-green-700">
+                                <span className="font-semibold">✓ Entregado:</span> {new Date(order.deliveredAt).toLocaleDateString('es-PE', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })} a las {new Date(order.deliveredAt).toLocaleTimeString('es-PE', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            ) : order.statusTimestamps?.en_camino ? (
+                              <p className="text-sm text-purple-700">
+                                <span className="font-semibold">🚗 En camino desde:</span> {new Date(order.statusTimestamps.en_camino).toLocaleTimeString('es-PE', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            ) : order.statusTimestamps?.cocinando ? (
+                              <p className="text-sm text-blue-700">
+                                <span className="font-semibold">👨‍🍳 En preparación desde:</span> {new Date(order.statusTimestamps.cocinando).toLocaleTimeString('es-PE', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            ) : (
+                              <p className="text-sm text-yellow-700">
+                                <span className="font-semibold">⏳ Tiempo estimado:</span> 30-45 minutos
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border-2 ${getStatusColor(order.status)}`}>
                           <span className="font-semibold">{getStatusLabel(order.status)}</span>
