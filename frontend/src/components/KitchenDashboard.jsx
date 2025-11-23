@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, User, Clock, CheckCircle, ChefHat, Package } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
-import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
+import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
 
 const KitchenDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
@@ -266,7 +266,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
                     )}
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
-                    {getStatusEmoji(order.status)} {getStatusLabel(order.status)}
+                    {getStatusLabel(order.status)}
                   </span>
                 </div>
 
