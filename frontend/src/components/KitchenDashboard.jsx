@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, User, Clock, CheckCircle, ChefHat, Package } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
+import NotificationBell from './NotificationBell';
 
 const KitchenDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending'); // pending, in-progress, completed
+  const [websocket, setWebsocket] = useState(null);
 
   useEffect(() => {
     loadOrders();
@@ -14,6 +16,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
     // Conectar WebSocket para actualizaciones en tiempo real
     const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=cocinero`;
     const ws = new WebSocket(wsUrl);
+    setWebsocket(ws);
     
     ws.onopen = () => {
       console.log('🔌 WebSocket conectado (Cocina)');
@@ -146,6 +149,9 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Notifications */}
+              <NotificationBell user={currentUser} websocket={websocket} />
+              
               {/* User Info */}
               {currentUser && (
                 <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
