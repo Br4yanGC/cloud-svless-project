@@ -3,6 +3,13 @@ const { requireAuth } = require('../utils/auth');
 const { success, error } = require('../utils/response');
 const { notifyOrderUpdate, notifyRestaurantStaff, broadcastToAll } = require('../utils/websocket');
 const { sendOrderNotification } = require('../utils/notifications');
+const { 
+  emitOrderCreated,
+  emitOrderStatusChanged,
+  emitOrderReady,
+  emitDriverAssigned,
+  emitOrderDelivered
+} = require('../utils/eventBridge');
 const {
   createOrder,
   getOrderById,
@@ -145,6 +152,9 @@ module.exports.create = async (event) => {
     };
 
     await createOrder(order);
+
+    // Emitir evento a EventBridge
+    await emitOrderCreated(order);
 
     // Notificar al restaurante via WebSocket
     await notifyRestaurantStaff({
@@ -377,6 +387,17 @@ module.exports.updateStatus = async (event) => {
     }
 
     await updateOrder(id, order);
+
+    // Emitir eventos a EventBridge según el nuevo estado
+    await emitOrderStatusChanged(order, currentStatus, newStatus);
+    
+    if (newStatus === ORDER_STATES.EMPACADO) {
+      // Notificar a despachadores
+      await emitOrderReady(order);
+    } else if (newStatus === ORDER_STATES.ENTREGADO) {
+      // Notificar al cliente
+      await emitOrderDelivered(order);
+    }
 
     // Notificar a TODOS los usuarios conectados via WebSocket (broadcast)
     await broadcastToAll({
@@ -772,6 +793,9 @@ module.exports.assignDriver = async (event) => {
     order.updatedAt = now;
 
     await updateOrder(id, order);
+
+    // Emitir evento de repartidor asignado
+    await emitDriverAssigned(order, order.deliveryPerson);
 
     // Notificar a TODOS los usuarios conectados via WebSocket (broadcast)
     await broadcastToAll({
