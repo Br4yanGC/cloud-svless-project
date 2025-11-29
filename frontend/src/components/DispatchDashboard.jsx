@@ -6,7 +6,8 @@ import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
 const DispatchDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('ready'); // ready, assigned, delivered
+  const [filter, setFilter] = useState('ready');
+  const [websocket, setWebsocket] = useState(null); // ready, assigned, delivered
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
@@ -20,6 +21,7 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
     // Conectar WebSocket para actualizaciones en tiempo real
     const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=despachador`;
     const ws = new WebSocket(wsUrl);
+    setWebsocket(ws);
     
     ws.onopen = () => {
       console.log('🔌 WebSocket conectado (Despacho)');
@@ -204,6 +206,9 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Notifications */}
+              <NotificationBell user={currentUser} websocket={websocket} />
+              
               {currentUser && (
                 <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
                   <User size={20} />

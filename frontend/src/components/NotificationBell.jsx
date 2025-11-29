@@ -147,6 +147,11 @@ const NotificationBell = ({ user, websocket }) => {
     }
   };
 
+  // No renderizar si no hay usuario
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="relative">
       {/* Bell Icon Button */}

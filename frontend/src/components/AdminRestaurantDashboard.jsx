@@ -3,6 +3,7 @@ import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Cale
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
 import OrderTimeline from './OrderTimeline';
+import NotificationBell from './NotificationBell';
 
 const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
   const [stats, setStats] = useState({
@@ -21,11 +22,46 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
   const [selectedTab, setSelectedTab] = useState('overview'); // overview, orders, menu, users
   const [showHistoryView, setShowHistoryView] = useState(false); // Vista dedicada de historial
   const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
+  const [websocket, setWebsocket] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
     const interval = setInterval(loadDashboardData, 60000); // Actualizar cada minuto
-    return () => clearInterval(interval);
+    
+    // Conectar WebSocket para actualizaciones en tiempo real
+    const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=admin`;
+    const ws = new WebSocket(wsUrl);
+    setWebsocket(ws);
+    
+    ws.onopen = () => {
+      console.log('🔌 WebSocket conectado (Admin)');
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Mensaje WebSocket recibido (Admin):', data);
+      
+      // Recargar dashboard cuando hay cambios
+      if (data.type === 'NEW_ORDER' || data.type === 'ORDER_STATUS_CHANGED' || data.type === 'order-updated') {
+        console.log('🔄 Recargando dashboard por cambio...');
+        loadDashboardData();
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('❌ Error WebSocket:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('🔌 WebSocket desconectado (Admin)');
+    };
+    
+    return () => {
+      clearInterval(interval);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, []);
 
   const loadDashboardData = async () => {
@@ -160,6 +196,9 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                 </div>
                 
                 <div className="flex items-center space-x-3">
+                  {/* Notifications */}
+                  <NotificationBell user={currentUser} websocket={websocket} />
+                  
                   {currentUser && (
                     <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
                       <User size={20} />
@@ -296,6 +335,9 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Notifications */}
+              <NotificationBell user={currentUser} websocket={websocket} />
+              
               {currentUser && (
                 <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
                   <User size={20} />

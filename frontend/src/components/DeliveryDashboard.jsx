@@ -4,8 +4,9 @@ import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
 
 const DeliveryDashboard = ({ currentUser, onLogout }) => {
-  const [myOrders, setMyOrders] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [websocket, setWebsocket] = useState(null);
   const [filter, setFilter] = useState('assigned'); // assigned, delivered
 
   useEffect(() => {
@@ -14,6 +15,7 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
     // Conectar WebSocket para actualizaciones en tiempo real
     const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=repartidor`;
     const ws = new WebSocket(wsUrl);
+    setWebsocket(ws);
     
     ws.onopen = () => {
       console.log('🔌 WebSocket conectado (Repartidor)');
@@ -146,6 +148,9 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Notifications */}
+              <NotificationBell user={currentUser} websocket={websocket} />
+              
               {currentUser && (
                 <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
                   <User size={20} />

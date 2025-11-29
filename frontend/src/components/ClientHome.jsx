@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor, getStatusDescription } from '../utils/orderStatus';
+import NotificationBell from './NotificationBell';
 
 const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed, orderConfirmation }) => {
   const [products, setProducts] = useState([]);
@@ -13,6 +14,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   const [myOrders, setMyOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
+  const [websocket, setWebsocket] = useState(null);
 
   const categories = [
     { id: 'all', name: 'Todo', icon: '🍽️' },
@@ -30,6 +32,65 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
     }
   }, []);
 
+  // Conectar WebSocket cuando hay usuario logueado
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser.id}&role=${currentUser.role}`;
+    console.log('🔌 Conectando WebSocket:', wsUrl);
+    const ws = new WebSocket(wsUrl);
+    setWebsocket(ws);
+    
+    ws.onopen = () => {
+      console.log('✅ WebSocket conectado exitosamente');
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Mensaje WebSocket recibido:', data);
+      
+      // Si es una actualización de pedido, actualizar localmente sin recargar
+      if (data.type === 'ORDER_STATUS_CHANGED' || data.type === 'ORDER_ASSIGNED' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+        console.log('🔄 Actualizando pedido localmente...');
+        
+        // Si viene el order completo en data.order
+        if (data.order) {
+          setMyOrders(prevOrders => 
+            prevOrders.map(order => 
+              order.id === data.order.id 
+                ? { ...order, ...data.order }
+                : order
+            )
+          );
+        }
+        // Si viene solo orderId y status (formato antiguo)
+        else if (data.orderId) {
+          setMyOrders(prevOrders => 
+            prevOrders.map(order => 
+              order.id === data.orderId 
+                ? { ...order, status: data.status, timeline: data.timeline || order.timeline }
+                : order
+            )
+          );
+        }
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('❌ Error WebSocket:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('🔌 WebSocket desconectado');
+    };
+    
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [currentUser]);
+
   // Cambiar a pestaña de pedidos cuando se crea un nuevo pedido
   useEffect(() => {
     if (orderCreated) {
@@ -41,60 +102,6 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   useEffect(() => {
     if (activeTab === 'orders' || activeTab === 'history') {
       loadMyOrders();
-      
-      // Conectar WebSocket para actualizaciones en tiempo real
-      const wsUrl = `${API_CONFIG.WEBSOCKET_URL}?userId=${currentUser?.id}&role=${currentUser?.role}`;
-      console.log('🔌 Conectando WebSocket:', wsUrl);
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        console.log('✅ WebSocket conectado exitosamente');
-      };
-      
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('📨 Mensaje WebSocket recibido:', data);
-        
-        // Si es una actualización de pedido, actualizar localmente sin recargar
-        if (data.type === 'ORDER_STATUS_CHANGED' || data.type === 'ORDER_ASSIGNED' || data.type === 'order-updated' || data.type === 'order-status-changed') {
-          console.log('🔄 Actualizando pedido localmente...');
-          
-          // Si viene el order completo en data.order
-          if (data.order) {
-            setMyOrders(prevOrders => 
-              prevOrders.map(order => 
-                order.id === data.order.id 
-                  ? { ...order, ...data.order }
-                  : order
-              )
-            );
-          }
-          // Si viene solo orderId y status (formato antiguo)
-          else if (data.orderId) {
-            setMyOrders(prevOrders => 
-              prevOrders.map(order => 
-                order.id === data.orderId 
-                  ? { ...order, status: data.status, timeline: data.timeline || order.timeline }
-                  : order
-              )
-            );
-          }
-        }
-      };
-      
-      ws.onerror = (error) => {
-        console.error('❌ Error WebSocket:', error);
-      };
-      
-      ws.onclose = () => {
-        console.log('🔌 WebSocket desconectado');
-      };
-      
-      return () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
     }
   }, [activeTab]);
 
@@ -244,6 +251,9 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
             
             {/* User and Cart Actions */}
             <div className="flex items-center space-x-3">
+              {/* Notifications */}
+              <NotificationBell user={currentUser} websocket={websocket} />
+              
               {/* User Info */}
               {currentUser && (
                 <div className="hidden md:flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg">
