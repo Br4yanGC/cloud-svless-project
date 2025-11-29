@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, User, MapPin, Phone, Navigation, CheckCircle, Package } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
+import NotificationBell from './NotificationBell';
 
 const DeliveryDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
