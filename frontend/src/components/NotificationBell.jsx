@@ -52,6 +52,8 @@ const NotificationBell = ({ user, websocket }) => {
   useEffect(() => {
     if (showPanel && user) {
       loadNotifications();
+      // Marcar todas como leídas automáticamente al abrir el panel
+      markAllAsReadAutomatically();
     }
   }, [showPanel, user]);
 
@@ -319,22 +321,22 @@ const NotificationBell = ({ user, websocket }) => {
     setUnreadCount(newUnread);
   };
 
-  const markAllAsRead = () => {
-    // Guardar todas en localStorage
-    notifications.forEach(notif => {
-      markAsReadInStorage(notif.orderId);
-    });
-    
-    // Actualizar estado local
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-    setUnreadCount(0);
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-    setUnreadCount(0);
+  const markAllAsReadAutomatically = () => {
+    // Esta función se ejecuta automáticamente al abrir el panel
+    // Espera un poco para que se carguen las notificaciones primero
+    setTimeout(() => {
+      notifications.forEach(notif => {
+        if (!notif.read) {
+          markAsReadInStorage(notif.orderId);
+        }
+      });
+      
+      // Actualizar estado local
+      setNotifications(prev =>
+        prev.map(notif => ({ ...notif, read: true }))
+      );
+      setUnreadCount(0);
+    }, 100);
   };
 
   const getNotificationIcon = (type) => {
@@ -391,24 +393,6 @@ const NotificationBell = ({ user, websocket }) => {
             </button>
           </div>
 
-          {/* Actions */}
-          {notifications.length > 0 && (
-            <div className="p-3 border-b border-gray-200 flex gap-2">
-              <button
-                onClick={markAllAsRead}
-                className="flex-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Marcar todas como leídas
-              </button>
-              <button
-                onClick={clearAll}
-                className="flex-1 text-sm text-red-600 hover:text-red-700 font-medium"
-              >
-                Limpiar todas
-              </button>
-            </div>
-          )}
-
           {/* Notifications List */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
@@ -427,24 +411,16 @@ const NotificationBell = ({ user, websocket }) => {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                      !notification.read ? 'bg-blue-50' : ''
-                    }`}
-                    onClick={() => !notification.read && markAsRead(notification.orderId)}
+                    className="p-4 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <span className="text-2xl">{getNotificationIcon(notification.type)}</span>
                           <div className="flex-1">
-                            <p className={`text-sm ${!notification.read ? 'font-bold text-gray-900' : 'text-gray-700'}`}>
+                            <p className="text-sm text-gray-700">
                               {notification.message}
                             </p>
-                            {notification.orderNumber && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                Pedido: {notification.orderNumber}
-                              </p>
-                            )}
                             <p className="text-xs text-gray-400 mt-1">
                               {new Date(notification.timestamp).toLocaleString('es-PE', {
                                 day: '2-digit',
