@@ -373,7 +373,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       )}
 
       {/* Content based on active tab */}
-      <div className="container mx-auto px-4 py-8">
+      <div className={`container mx-auto px-4 py-8 ${activeTab === 'menu' && getTotalItems() > 0 ? 'pb-32' : ''}`}>
         {activeTab === 'menu' && (
           <>
             {/* Products Grid */}
