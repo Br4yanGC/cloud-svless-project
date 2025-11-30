@@ -73,7 +73,7 @@ exports.handler = async (event) => {
  */
 async function broadcastOrderUpdate(order) {
   try {
-    const CONNECTIONS_TABLE = `restaurant-connections-${process.env.STAGE}`;
+    const CONNECTIONS_TABLE = `restaurant-websocket-service-connections-${process.env.STAGE}`;
     
     // Obtener todas las conexiones activas
     const connectionsResult = await dynamodb.scan({
