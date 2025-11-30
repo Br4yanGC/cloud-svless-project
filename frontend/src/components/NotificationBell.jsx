@@ -8,6 +8,39 @@ const NotificationBell = ({ user, websocket }) => {
   const [showPanel, setShowPanel] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Obtener clave de localStorage específica para el usuario
+  const getReadNotificationsKey = () => {
+    return `readNotifications_${user?.id}`;
+  };
+
+  // Obtener notificaciones leídas del localStorage
+  const getReadNotifications = () => {
+    try {
+      const stored = localStorage.getItem(getReadNotificationsKey());
+      return stored ? JSON.parse(stored) : {};
+    } catch (error) {
+      console.error('Error reading from localStorage:', error);
+      return {};
+    }
+  };
+
+  // Guardar notificación como leída en localStorage
+  const markAsReadInStorage = (orderId) => {
+    try {
+      const readNotifications = getReadNotifications();
+      readNotifications[orderId] = Date.now();
+      localStorage.setItem(getReadNotificationsKey(), JSON.stringify(readNotifications));
+    } catch (error) {
+      console.error('Error writing to localStorage:', error);
+    }
+  };
+
+  // Verificar si una orden está leída
+  const isNotificationRead = (orderId) => {
+    const readNotifications = getReadNotifications();
+    return !!readNotifications[orderId];
+  };
+
   // Cargar notificaciones desde DynamoDB cuando se abre el panel
   useEffect(() => {
     if (showPanel && user) {
@@ -63,11 +96,8 @@ const NotificationBell = ({ user, websocket }) => {
       
       setNotifications(filteredNotifications);
       
-      // Calcular no leídas (órdenes de las últimas 2 horas)
-      const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
-      const unread = filteredNotifications.filter(notif => 
-        new Date(notif.timestamp).getTime() > twoHoursAgo
-      ).length;
+      // Calcular no leídas basadas en localStorage
+      const unread = filteredNotifications.filter(notif => !isNotificationRead(notif.orderId)).length;
       setUnreadCount(unread);
       
     } catch (error) {
@@ -148,7 +178,7 @@ const NotificationBell = ({ user, websocket }) => {
         orderId: order.id,
         orderNumber: order.orderNumber,
         timestamp: order.updatedAt || order.createdAt,
-        read: isOrderRead(order, user)
+        read: isNotificationRead(order.id)
       }));
   };
 
@@ -182,12 +212,6 @@ const NotificationBell = ({ user, websocket }) => {
         return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
     }
     return `Pedido #${order.orderNumber}`;
-  };
-
-  const isOrderRead = (order, user) => {
-    // Considerar leída si tiene más de 2 horas
-    const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
-    return new Date(order.updatedAt || order.createdAt).getTime() < twoHoursAgo;
   };
 
   const shouldReceiveNotification = (data, user) => {
@@ -250,18 +274,29 @@ const NotificationBell = ({ user, websocket }) => {
     }
   };
 
-  const markAsRead = (notificationId) => {
+  const markAsRead = (orderId) => {
+    // Guardar en localStorage
+    markAsReadInStorage(orderId);
+    
+    // Actualizar estado local
     setNotifications(prev =>
       prev.map(notif =>
-        notif.id === notificationId ? { ...notif, read: true } : notif
+        notif.orderId === orderId ? { ...notif, read: true } : notif
       )
     );
+    
     // Recalcular unread count
-    const newUnread = notifications.filter(n => n.id !== notificationId && !n.read).length;
+    const newUnread = notifications.filter(n => n.orderId !== orderId && !isNotificationRead(n.orderId)).length;
     setUnreadCount(newUnread);
   };
 
   const markAllAsRead = () => {
+    // Guardar todas en localStorage
+    notifications.forEach(notif => {
+      markAsReadInStorage(notif.orderId);
+    });
+    
+    // Actualizar estado local
     setNotifications(prev =>
       prev.map(notif => ({ ...notif, read: true }))
     );
@@ -363,10 +398,10 @@ const NotificationBell = ({ user, websocket }) => {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
+                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                       !notification.read ? 'bg-blue-50' : ''
                     }`}
-                    onClick={() => !notification.read && markAsRead(notification.id)}
+                    onClick={() => !notification.read && markAsRead(notification.orderId)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
