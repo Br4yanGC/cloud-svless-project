@@ -121,6 +121,7 @@ resources:
       Type: AWS::Events::Rule
       Properties:
         Description: "Trigger review workflow when order is delivered"
+        EventBusName: restaurant-events-dev
         EventPattern:
           source:
             - restaurant.orders
