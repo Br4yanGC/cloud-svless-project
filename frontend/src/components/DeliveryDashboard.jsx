@@ -88,10 +88,10 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
       
       console.log('🚗 Mis entregas filtradas:', myDeliveries);
       console.log(`📊 Total de entregas encontradas: ${myDeliveries.length}`);
-      setMyOrders(myDeliveries);
+      setOrders(myDeliveries);
     } catch (error) {
       console.error('Error al cargar mis órdenes:', error);
-      setMyOrders([]);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
       console.log('✅ Pedido marcado como entregado');
       
       // Actualización optimista
-      setMyOrders(myOrders.map(order => 
+      setOrders(orders.map(order => 
         order.id === orderId ? { ...order, status: 'entregado' } : order
       ));
       
@@ -126,14 +126,14 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
   };
 
-  const filteredOrders = myOrders.filter(order => {
+  const filteredOrders = orders.filter(order => {
     if (filter === 'assigned') return order.status === 'en_camino' || order.status === 'empacado';
     if (filter === 'delivered') return order.status === 'entregado';
     return true;
   });
 
-  const assignedCount = myOrders.filter(o => o.status === 'en_camino' || o.status === 'empacado').length;
-  const deliveredCount = myOrders.filter(o => o.status === 'entregado').length;
+  const assignedCount = orders.filter(o => o.status === 'en_camino' || o.status === 'empacado').length;
+  const deliveredCount = orders.filter(o => o.status === 'entregado').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -340,7 +340,7 @@ const DeliveryDashboard = ({ currentUser, onLogout }) => {
                             'ORDERS'
                           );
                           // Actualización optimista
-                          setMyOrders(myOrders.map(o => 
+                          setOrders(orders.map(o => 
                             o.id === order.id ? { ...o, status: 'en_camino' } : o
                           ));
                         } catch (error) {
