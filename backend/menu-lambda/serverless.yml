@@ -141,6 +141,9 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:provider.environment.IMAGES_BUCKET}
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: ObjectWriter
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
