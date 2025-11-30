@@ -225,19 +225,22 @@ const NotificationBell = ({ user, websocket }) => {
       'entregado': 'Entregado'
     };
 
+    // Obtener los primeros 8 caracteres del ID
+    const shortId = order.id.substring(0, 8);
+
     switch (user.role) {
       case 'cocinero':
-        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
+        return `Pedido #${shortId} - ${statusMessages[order.status] || order.status}`;
       case 'despachador':
-        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
+        return `Pedido #${shortId} - ${statusMessages[order.status] || order.status}`;
       case 'repartidor':
-        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
+        return `Pedido #${shortId} - ${statusMessages[order.status] || order.status}`;
       case 'cliente':
-        return `Tu pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
+        return `Tu pedido #${shortId} - ${statusMessages[order.status] || order.status}`;
       case 'admin':
-        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
+        return `Pedido #${shortId} - ${statusMessages[order.status] || order.status}`;
     }
-    return `Pedido #${order.orderNumber}`;
+    return `Pedido #${shortId}`;
   };
 
   const shouldReceiveNotification = (data, user) => {
