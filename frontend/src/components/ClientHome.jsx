@@ -16,6 +16,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
   const [reviewOrder, setReviewOrder] = useState(null); // Para modal de reseña
+  const [showThankYouModal, setShowThankYouModal] = useState(false); // Para modal de agradecimiento
   const [websocket, setWebsocket] = useState(null);
 
   const categories = [
@@ -241,13 +242,13 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       setMyOrders(prevOrders =>
         prevOrders.map(order =>
           order.id === reviewOrder.id
-            ? { ...order, reviewSubmitted: true }
+            ? { ...order, reviewSubmitted: true, customerRating: reviewData.rating }
             : order
         )
       );
 
       setReviewOrder(null);
-      alert('¡Gracias por tu calificación!');
+      setShowThankYouModal(true);
     } catch (error) {
       console.error('Error submitting review:', error);
       throw error;
@@ -730,9 +731,23 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
 
                       {order.reviewSubmitted && (
                         <div className="mt-4 pt-4 border-t border-gray-200">
-                          <div className="flex items-center justify-center space-x-2 text-green-600">
-                            <CheckCircle size={20} />
-                            <span className="font-semibold">Ya calificaste este pedido</span>
+                          <div className="flex flex-col items-center justify-center space-y-2">
+                            <div className="flex items-center space-x-2 text-green-600">
+                              <CheckCircle size={20} />
+                              <span className="font-semibold">Ya calificaste este pedido</span>
+                            </div>
+                            {order.customerRating && (
+                              <div className="flex items-center space-x-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    size={16}
+                                    className={star <= order.customerRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                                  />
+                                ))}
+                                <span className="ml-2 text-sm text-gray-600">({order.customerRating}/5)</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -932,6 +947,29 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
           onClose={() => setReviewOrder(null)}
           onSubmit={handleSubmitReview}
         />
+      )}
+
+      {/* Modal de Agradecimiento */}
+      {showThankYouModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center animate-scale-in">
+            <div className="mb-6">
+              <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle size={48} className="text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Gracias por tu calificación!</h2>
+              <p className="text-gray-600">
+                Tu opinión es muy importante para nosotros y nos ayuda a mejorar nuestro servicio.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowThankYouModal(false)}
+              className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
