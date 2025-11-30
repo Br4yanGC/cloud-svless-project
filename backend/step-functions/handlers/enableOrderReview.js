@@ -1,6 +1,9 @@
 const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const eventbridge = new AWS.EventBridge();
+const apigateway = new AWS.ApiGatewayManagementApi({
+  endpoint: process.env.WEBSOCKET_ENDPOINT
+});
 
 const ORDERS_TABLE = process.env.ORDERS_TABLE;
 
@@ -32,6 +35,9 @@ exports.handler = async (event) => {
     const result = await dynamodb.update(updateParams).promise();
     console.log('✅ Order updated - review enabled:', result.Attributes);
 
+    // Notificar via WebSocket a TODOS los usuarios conectados
+    await broadcastOrderUpdate(result.Attributes);
+
     // Publicar evento de que la reseña está habilitada
     await eventbridge.putEvents({
       Entries: [{
@@ -61,3 +67,53 @@ exports.handler = async (event) => {
     throw error;
   }
 };
+
+/**
+ * Broadcast order update via WebSocket
+ */
+async function broadcastOrderUpdate(order) {
+  try {
+    const CONNECTIONS_TABLE = `restaurant-connections-${process.env.STAGE}`;
+    
+    // Obtener todas las conexiones activas
+    const connectionsResult = await dynamodb.scan({
+      TableName: CONNECTIONS_TABLE
+    }).promise();
+
+    console.log(`📡 Broadcasting to ${connectionsResult.Items.length} connections`);
+
+    // Enviar mensaje a cada conexión
+    const message = JSON.stringify({
+      type: 'REVIEW_ENABLED',
+      order: order,
+      message: `Pedido ${order.orderNumber} ya puede ser calificado`
+    });
+
+    const promises = connectionsResult.Items.map(async ({ connectionId }) => {
+      try {
+        await apigateway.postToConnection({
+          ConnectionId: connectionId,
+          Data: message
+        }).promise();
+        console.log(`✅ Sent to connection ${connectionId}`);
+      } catch (error) {
+        if (error.statusCode === 410) {
+          // Conexión obsoleta, eliminarla
+          console.log(`🗑️  Deleting stale connection ${connectionId}`);
+          await dynamodb.delete({
+            TableName: CONNECTIONS_TABLE,
+            Key: { connectionId }
+          }).promise();
+        } else {
+          console.error(`❌ Error sending to ${connectionId}:`, error);
+        }
+      }
+    });
+
+    await Promise.all(promises);
+    console.log('📢 Broadcast completed');
+  } catch (error) {
+    console.error('❌ Error broadcasting:', error);
+    // No lanzar error para que no falle el flujo principal
+  }
+}

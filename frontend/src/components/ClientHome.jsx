@@ -52,7 +52,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       console.log('📨 Mensaje WebSocket recibido:', data);
       
       // Si es una actualización de pedido, actualizar localmente sin recargar
-      if (data.type === 'ORDER_STATUS_CHANGED' || data.type === 'ORDER_ASSIGNED' || data.type === 'order-updated' || data.type === 'order-status-changed') {
+      if (data.type === 'ORDER_STATUS_CHANGED' || data.type === 'ORDER_ASSIGNED' || data.type === 'order-updated' || data.type === 'order-status-changed' || data.type === 'REVIEW_ENABLED') {
         console.log('🔄 Actualizando pedido localmente...');
         
         // Si viene el order completo en data.order

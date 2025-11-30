@@ -11,6 +11,7 @@ provider:
     STAGE: ${self:provider.stage}
     ORDERS_TABLE: restaurant-orders-${self:provider.stage}
     REVIEWS_TABLE: restaurant-reviews-${self:provider.stage}
+    WEBSOCKET_ENDPOINT: https://ipnmobquh2.execute-api.us-east-1.amazonaws.com/dev
   iam:
     role: arn:aws:iam::281043631139:role/LabRole
 
