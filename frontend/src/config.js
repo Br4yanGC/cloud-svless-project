@@ -3,7 +3,7 @@ export const API_CONFIG = {
   AUTH_URL: 'https://tcb2i6e738.execute-api.us-east-1.amazonaws.com/dev',
   ORDERS_URL: import.meta.env.VITE_ORDERS_API_URL || 'https://rcegr7f0k6.execute-api.us-east-1.amazonaws.com/dev',
   MENU_URL: import.meta.env.VITE_MENU_API_URL || 'https://5d54a4hl5k.execute-api.us-east-1.amazonaws.com/dev',
-  REVIEWS_URL: import.meta.env.VITE_REVIEWS_API_URL || 'https://API_GATEWAY_URL/dev', // Se actualizará después del deploy
+  REVIEWS_URL: import.meta.env.VITE_REVIEWS_API_URL || 'https://egdvyhf02e.execute-api.us-east-1.amazonaws.com/dev',
   WEBSOCKET_URL: import.meta.env.VITE_WEBSOCKET_URL || 'wss://ipnmobquh2.execute-api.us-east-1.amazonaws.com/dev',
   ENDPOINTS: {
     // Auth

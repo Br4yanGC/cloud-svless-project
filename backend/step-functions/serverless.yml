@@ -12,22 +12,7 @@ provider:
     ORDERS_TABLE: restaurant-orders-${self:provider.stage}
     REVIEWS_TABLE: restaurant-reviews-${self:provider.stage}
   iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:Query
-          Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}/index/*
-        - Effect: Allow
-          Action:
-            - events:PutEvents
-          Resource: "*"
+    role: arn:aws:iam::281043631139:role/LabRole
 
 plugins:
   - serverless-step-functions
@@ -59,9 +44,12 @@ functions:
           cors: true
 
 stepFunctions:
+  validate: true
   stateMachines:
     enableReviewWorkflow:
+      id: EnableReviewWorkflowStateMachine
       name: EnableReviewWorkflow-${self:provider.stage}
+      role: arn:aws:iam::281043631139:role/LabRole
       definition:
         Comment: "Enable review option after order delivery"
         StartAt: WaitAfterDelivery
@@ -91,17 +79,6 @@ stepFunctions:
           WorkflowFailed:
             Type: Fail
             Cause: "Failed to enable review"
-      events:
-        - eventBridge:
-            eventBus: restaurant-events-${self:provider.stage}
-            pattern:
-              source:
-                - restaurant.orders
-              detail-type:
-                - OrderStatusChanged
-              detail:
-                newStatus:
-                  - entregado
 
 resources:
   Resources:
