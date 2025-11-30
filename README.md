@@ -47,9 +47,7 @@ Dashboard del restaurante:
 - Lambda (Microservicios)
 - DynamoDB (Base de datos)
 - EventBridge (Eventos)
-- Step Functions (Workflow de reseñas) ⭐ NUEVO
-- SES (Emails)
-- S3 (Imágenes)
+- S3 (Imágenes de productos)
 
 **Microservicios:**
 1. **auth-lambda** - Autenticación y usuarios

@@ -1,23 +1,26 @@
-# Step Functions - Review Workflow
+# Step Functions - Review Enablement Workflow
 
-Sistema de Step Functions para gestionar el workflow de solicitud de reseñas post-entrega.
+Sistema de AWS Step Functions que habilita automáticamente la opción de calificar pedidos después de la entrega.
 
 ## 🔄 Flujo del Workflow
 
 ```
-Pedido Entregado (EventBridge: OrderStatusChanged → entregado)
+1. Pedido se marca como "ENTREGADO"
    ↓
-⏰ Espera 10 minutos
+2. EventBridge detecta evento "OrderStatusChanged → entregado"
    ↓
-📧 Envía email de satisfacción
+3. Step Function se inicia automáticamente
    ↓
-⏰ Espera 24 horas
+4. ⏰ Espera 5 minutos (para que el cliente reciba el pedido)
    ↓
-🔍 Verifica si dejó reseña
-   ├─ ✅ SÍ → Envía email de agradecimiento + cupón 10% OFF
-   └─ ❌ NO → Envía recordatorio de reseña
+5. Lambda "enableOrderReview" actualiza DynamoDB:
+   - reviewable: true
+   - reviewEnabledAt: timestamp
+   - reviewSubmitted: false
    ↓
-✅ Workflow completo
+6. Publica evento "ReviewEnabled" en EventBridge
+   ↓
+7. ✅ Cliente puede ver botón "Calificar Pedido" en su historial
 ```
 
 ## 📦 Estructura
@@ -27,18 +30,12 @@ step-functions/
 ├── serverless.yml              # Configuración de Step Functions
 ├── package.json
 ├── handlers/
-│   ├── sendSatisfactionEmail.js   # Email inicial pidiendo reseña
-│   ├── checkReview.js             # Verifica si existe reseña
-│   ├── sendReviewReminder.js      # Recordatorio si no hay reseña
-│   └── sendThankYouEmail.js       # Agradecimiento + cupón
+│   ├── enableOrderReview.js    # Habilita calificación (Step Function)
+│   ├── submitReview.js         # API: Guardar reseña del cliente
+│   └── getOrderReviews.js      # API: Obtener reseñas de un pedido
 ```
 
 ## 🚀 Despliegue
-
-### Prerrequisitos
-
-1. Tener desplegado `orders-lambda` (para EventBridge)
-2. Email verificado en AWS SES: `brayan.gomero@unmsm.edu.pe`
 
 ### Instalación
 
@@ -50,34 +47,68 @@ npm install
 ### Deploy
 
 ```bash
-# Deploy en dev
 serverless deploy --stage dev
-
-# Ver logs de una función específica
-serverless logs -f sendSatisfactionEmail --stage dev
-
-# Ver estado de la Step Function
-aws stepfunctions describe-state-machine \
-  --state-machine-arn arn:aws:states:us-east-1:ACCOUNT:stateMachine:ReviewWorkflow-dev
 ```
+
+Esto creará:
+- ✅ State Machine: `EnableReviewWorkflow-dev`
+- ✅ DynamoDB Table: `restaurant-reviews-dev`
+- ✅ 3 Lambda Functions
+- ✅ API Gateway endpoints para reviews
+- ✅ EventBridge Rule (auto-trigger)
 
 ## 📊 Tabla DynamoDB: Reviews
 
 ```javascript
 {
-  "orderId": "4f6e8696-1234-5678-90ab-cdef12345678",  // PK
-  "customerId": "user-123",
-  "rating": 5,
-  "comment": "Excelente servicio!",
-  "createdAt": "2025-11-29T10:00:00Z"
+  "id": "review-uuid",               // PK
+  "orderId": "4f6e8696-...",         // GSI
+  "customerId": "user-123",          // GSI + Sort Key
+  "rating": 5,                       // 1-5 estrellas
+  "comment": "Excelente pizza!",
+  "hasComplaint": false,
+  "complaintText": null,
+  "createdAt": "2025-11-29T...",
+  "updatedAt": "2025-11-29T..."
 }
 ```
 
-**GSI:** `CustomerIdIndex` para buscar todas las reseñas de un cliente.
+**Índices:**
+- `OrderIdIndex` - Buscar reseñas por pedido
+- `CustomerIdIndex` - Buscar reseñas de un cliente (con sort por fecha)
 
-## 🎯 Eventos que Disparan el Workflow
+## 🔗 API Endpoints
 
-El Step Function se inicia automáticamente cuando se recibe este evento en EventBridge:
+Después del deploy, obtendrás una URL de API Gateway:
+
+### POST /reviews
+Crear nueva reseña
+
+```json
+{
+  "orderId": "4f6e8696-...",
+  "customerId": "user-123",
+  "rating": 5,
+  "comment": "Excelente servicio!",
+  "hasComplaint": false,
+  "complaintText": null
+}
+```
+
+### GET /reviews/{orderId}
+Obtener reseñas de un pedido
+
+**Response:**
+```json
+{
+  "reviews": [...],
+  "count": 1
+}
+```
+
+## 🎯 Integración con EventBridge
+
+El Step Function se dispara automáticamente con este patrón de evento:
 
 ```json
 {
@@ -92,110 +123,135 @@ El Step Function se inicia automáticamente cuando se recibe este evento en Even
 }
 ```
 
-## 📧 Emails Enviados
+## 🎨 Integración Frontend
 
-### 1. Email de Satisfacción (10 min después)
-- Asunto: "¿Cómo estuvo tu pedido #4f6e8696? 🍕"
-- Contenido: Solicitud de reseña con botón CTA
-- Link: `https://app.com/review/{orderId}`
+### 1. Actualizar config.js con URL del API
 
-### 2. Recordatorio (24 horas después, si no hay reseña)
-- Asunto: "¡No olvides dejar tu reseña! 🌟"
-- Contenido: Recordatorio + incentivo de cupón
-- Promoción: 10% OFF por dejar reseña
+Después del deploy, copia el API Gateway URL:
 
-### 3. Agradecimiento (si dejó reseña)
-- Asunto: "¡Gracias por tu reseña! 🙏"
-- Contenido: Agradecimiento + cupón
-- Cupón: `REVIEW{shortOrderId}` - 10% OFF válido 30 días
+```javascript
+// frontend/src/config.js
+REVIEWS_URL: 'https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/dev'
+```
 
-## ⚙️ Configuración de Timeouts
+### 2. El componente ya está integrado
 
-- **WaitAfterDelivery:** 600 segundos (10 minutos)
-- **Wait24Hours:** 86400 segundos (24 horas)
-- **Retry Policy:** 2 intentos con backoff exponencial
-- **Timeout por Lambda:** 30 segundos
+- ✅ `ReviewModal.jsx` - Modal de calificación
+- ✅ `ClientHome.jsx` - Muestra botón "Calificar Pedido"
+- ✅ Detecta `order.reviewable && !order.reviewSubmitted`
+
+## ⚙️ Configuración
+
+### Timeouts
+
+- **Wait After Delivery:** 300 segundos (5 minutos)
+- **Lambda Timeout:** 30 segundos
+- **Retry Policy:** 3 intentos con backoff exponencial
+
+### Variables de Entorno
+
+```yaml
+ORDERS_TABLE: restaurant-orders-dev
+REVIEWS_TABLE: restaurant-reviews-dev
+STAGE: dev
+```
 
 ## 🔍 Testing
 
-### Simular evento de pedido entregado
+### 1. Simular evento de pedido entregado
 
 ```bash
 aws events put-events --entries '[
   {
     "Source": "restaurant.orders",
     "DetailType": "OrderStatusChanged",
-    "Detail": "{\"orderId\":\"test-order-123\",\"customerId\":\"user-123\",\"oldStatus\":\"en_camino\",\"newStatus\":\"entregado\"}",
+    "Detail": "{\"orderId\":\"test-123\",\"customerId\":\"user-123\",\"oldStatus\":\"en_camino\",\"newStatus\":\"entregado\"}",
     "EventBusName": "restaurant-events-dev"
   }
 ]'
 ```
 
-### Ver ejecuciones de Step Functions
+### 2. Verificar ejecución del Step Function
 
 ```bash
-# Listar ejecuciones
 aws stepfunctions list-executions \
-  --state-machine-arn arn:aws:states:us-east-1:ACCOUNT:stateMachine:ReviewWorkflow-dev
-
-# Ver detalles de una ejecución
-aws stepfunctions describe-execution \
-  --execution-arn arn:aws:states:us-east-1:ACCOUNT:execution:ReviewWorkflow-dev:execution-id
+  --state-machine-arn arn:aws:states:us-east-1:ACCOUNT:stateMachine:EnableReviewWorkflow-dev
 ```
 
-## 📈 Métricas y Monitoreo
+### 3. Ver logs de Lambda
 
-Las métricas están disponibles en CloudWatch:
+```bash
+serverless logs -f enableOrderReview --stage dev --tail
+```
 
-- **ExecutionsStarted:** Workflows iniciados
-- **ExecutionsSucceeded:** Workflows completados exitosamente
-- **ExecutionsFailed:** Workflows fallidos
-- **ExecutionTime:** Tiempo de ejecución
+## 📈 Monitoreo
 
-## 💰 Costos Estimados
+### CloudWatch Metrics
 
-- **Step Functions:** $0.025 por 1000 transiciones de estado
-- **Lambda:** Incluido en free tier (1M requests/mes)
-- **SES:** $0.10 por 1000 emails
-- **DynamoDB:** PAY_PER_REQUEST (mínimo costo)
+- `ExecutionsStarted` - Workflows iniciados
+- `ExecutionsSucceeded` - Workflows exitosos
+- `ExecutionsFailed` - Workflows fallidos
+- `ExecutionTime` - Tiempo de ejecución
 
-**Costo estimado por pedido:** ~$0.0002 USD
+### Ver estado en AWS Console
+
+1. AWS Step Functions Console
+2. State Machines → `EnableReviewWorkflow-dev`
+3. Executions → Ver historial de ejecuciones
+
+## 🎨 Frontend - Flujo de Usuario
+
+```
+1. Cliente ve "Mis Pedidos" → Tab "Historial"
+   ↓
+2. Pedido entregado muestra:
+   - ✅ Badge "Entregado"
+   - ⭐ Botón "Calificar Pedido" (si reviewable=true)
+   ↓
+3. Click en "Calificar Pedido"
+   ↓
+4. Modal aparece con:
+   - ⭐⭐⭐⭐⭐ Estrellas clickeables
+   - 📝 Textarea para comentario
+   - ❌ Checkbox "Tengo un reclamo"
+   - 📋 Textarea de reclamo (si checkbox marcado)
+   ↓
+5. Submit → POST /reviews
+   ↓
+6. Orden se marca como reviewSubmitted=true
+   ↓
+7. Aparece: ✅ "Ya calificaste este pedido"
+```
+
+## 💰 Costos
+
+- **Step Functions:** $0.025 por 1000 transiciones
+- **Lambda:** Free tier (1M requests/mes)
+- **DynamoDB:** PAY_PER_REQUEST (~$1.25 por millón de lecturas)
+- **API Gateway:** $3.50 por millón de requests
+
+**Costo estimado por pedido:** ~$0.0001 USD
 
 ## 🛠️ Troubleshooting
 
-### Error: Email no verificado en SES
+### Error: State machine not triggering
 
+Verificar EventBridge rule:
 ```bash
-# Verificar email en SES
-aws ses verify-email-identity --email-address brayan.gomero@unmsm.edu.pe
+aws events list-rules --name-prefix EnableReviewWorkflow
 ```
 
-### Ver logs de una ejecución fallida
+### Error: Review not showing in frontend
 
-```bash
-serverless logs -f sendSatisfactionEmail --stage dev --startTime 1h
-```
+1. Verificar que el pedido tiene `reviewable: true` en DynamoDB
+2. Check logs: `serverless logs -f enableOrderReview`
+3. Verificar que han pasado 5 minutos desde la entrega
 
 ### Eliminar el servicio
 
 ```bash
 serverless remove --stage dev
 ```
-
-## 🔗 Integración con Frontend
-
-Endpoint para que el cliente deje reseña:
-
-```javascript
-// POST /api/reviews
-{
-  "orderId": "4f6e8696-...",
-  "rating": 5,
-  "comment": "Excelente servicio!"
-}
-```
-
-Este endpoint guardará la reseña en DynamoDB, y el Step Function lo detectará en su próxima verificación.
 
 ---
 

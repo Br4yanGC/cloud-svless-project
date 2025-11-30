@@ -9,7 +9,6 @@ provider:
   stage: ${opt:stage, 'dev'}
   environment:
     STAGE: ${self:provider.stage}
-    USERS_TABLE: restaurant-users-${self:provider.stage}
     ORDERS_TABLE: restaurant-orders-${self:provider.stage}
     REVIEWS_TABLE: restaurant-reviews-${self:provider.stage}
   iam:
@@ -19,16 +18,12 @@ provider:
           Action:
             - dynamodb:GetItem
             - dynamodb:PutItem
-            - dynamodb:Query
             - dynamodb:UpdateItem
+            - dynamodb:Query
           Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}
-        - Effect: Allow
-          Action:
-            - ses:SendEmail
-          Resource: "*"
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}/index/*
         - Effect: Allow
           Action:
             - events:PutEvents
@@ -38,49 +33,54 @@ plugins:
   - serverless-step-functions
 
 functions:
-  sendSatisfactionEmail:
-    handler: handlers/sendSatisfactionEmail.handler
-    description: Send satisfaction survey email after delivery
+  enableOrderReview:
+    handler: handlers/enableOrderReview.handler
+    description: Enable review for delivered order
     timeout: 30
 
-  checkReview:
-    handler: handlers/checkReview.handler
-    description: Check if customer left a review
+  submitReview:
+    handler: handlers/submitReview.handler
+    description: Submit customer review and rating
     timeout: 30
+    events:
+      - http:
+          path: reviews
+          method: post
+          cors: true
 
-  sendReviewReminder:
-    handler: handlers/sendReviewReminder.handler
-    description: Send reminder to leave review
+  getOrderReviews:
+    handler: handlers/getOrderReviews.handler
+    description: Get reviews for an order
     timeout: 30
-
-  sendThankYouEmail:
-    handler: handlers/sendThankYouEmail.handler
-    description: Thank customer for their review
-    timeout: 30
+    events:
+      - http:
+          path: reviews/{orderId}
+          method: get
+          cors: true
 
 stepFunctions:
   stateMachines:
-    reviewWorkflow:
-      name: ReviewWorkflow-${self:provider.stage}
+    enableReviewWorkflow:
+      name: EnableReviewWorkflow-${self:provider.stage}
       definition:
-        Comment: "Post-delivery review request workflow"
+        Comment: "Enable review option after order delivery"
         StartAt: WaitAfterDelivery
         States:
           WaitAfterDelivery:
             Type: Wait
-            Seconds: 600  # 10 minutos después de entrega
-            Next: SendSatisfactionEmail
+            Seconds: 300  # 5 minutos después de entrega
+            Next: EnableReview
           
-          SendSatisfactionEmail:
+          EnableReview:
             Type: Task
             Resource:
-              Fn::GetAtt: [sendSatisfactionEmail, Arn]
-            Next: Wait24Hours
+              Fn::GetAtt: [enableOrderReview, Arn]
+            End: true
             Retry:
               - ErrorEquals:
                   - States.ALL
-                IntervalSeconds: 60
-                MaxAttempts: 2
+                IntervalSeconds: 30
+                MaxAttempts: 3
                 BackoffRate: 2
             Catch:
               - ErrorEquals:
@@ -88,61 +88,9 @@ stepFunctions:
                 ResultPath: $.error
                 Next: WorkflowFailed
           
-          Wait24Hours:
-            Type: Wait
-            Seconds: 86400  # 24 horas
-            Next: CheckIfReviewed
-          
-          CheckIfReviewed:
-            Type: Task
-            Resource:
-              Fn::GetAtt: [checkReview, Arn]
-            Next: HasReview
-            Retry:
-              - ErrorEquals:
-                  - States.ALL
-                IntervalSeconds: 30
-                MaxAttempts: 2
-          
-          HasReview:
-            Type: Choice
-            Choices:
-              - Variable: $.hasReview
-                BooleanEquals: true
-                Next: SendThankYou
-              - Variable: $.hasReview
-                BooleanEquals: false
-                Next: SendReviewReminder
-            Default: WorkflowComplete
-          
-          SendReviewReminder:
-            Type: Task
-            Resource:
-              Fn::GetAtt: [sendReviewReminder, Arn]
-            Next: WorkflowComplete
-            Retry:
-              - ErrorEquals:
-                  - States.ALL
-                IntervalSeconds: 60
-                MaxAttempts: 2
-          
-          SendThankYou:
-            Type: Task
-            Resource:
-              Fn::GetAtt: [sendThankYouEmail, Arn]
-            Next: WorkflowComplete
-            Retry:
-              - ErrorEquals:
-                  - States.ALL
-                IntervalSeconds: 60
-                MaxAttempts: 2
-          
-          WorkflowComplete:
-            Type: Succeed
-          
           WorkflowFailed:
             Type: Fail
-            Cause: "Workflow execution failed"
+            Cause: "Failed to enable review"
       events:
         - eventBridge:
             eventBus: restaurant-events-${self:provider.stage}
@@ -163,19 +111,29 @@ resources:
         TableName: ${self:provider.environment.REVIEWS_TABLE}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
           - AttributeName: orderId
             AttributeType: S
           - AttributeName: customerId
             AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
         KeySchema:
-          - AttributeName: orderId
+          - AttributeName: id
             KeyType: HASH
         GlobalSecondaryIndexes:
+          - IndexName: OrderIdIndex
+            KeySchema:
+              - AttributeName: orderId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
           - IndexName: CustomerIdIndex
             KeySchema:
               - AttributeName: customerId
                 KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL
-        StreamSpecification:
-          StreamViewType: NEW_AND_OLD_IMAGES

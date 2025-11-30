@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck, X } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, LogOut, User, Package, History, UtensilsCrossed, Clock, CheckCircle, Truck, X, Star } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor, getStatusDescription } from '../utils/orderStatus';
 import NotificationBell from './NotificationBell';
+import ReviewModal from './ReviewModal';
 
 const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderViewed, orderConfirmation }) => {
   const [products, setProducts] = useState([]);
@@ -14,6 +15,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
   const [myOrders, setMyOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
+  const [reviewOrder, setReviewOrder] = useState(null); // Para modal de reseña
   const [websocket, setWebsocket] = useState(null);
 
   const categories = [
@@ -218,6 +220,38 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
       const product = products.find(p => p.id === productId);
       return sum + (product ? product.price * qty : 0);
     }, 0);
+  };
+
+  const handleSubmitReview = async (reviewData) => {
+    try {
+      await apiRequest(
+        API_CONFIG.ENDPOINTS.REVIEWS,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            orderId: reviewOrder.id,
+            customerId: currentUser.id,
+            ...reviewData
+          })
+        },
+        'REVIEWS'
+      );
+
+      // Actualizar la orden localmente
+      setMyOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id === reviewOrder.id
+            ? { ...order, reviewSubmitted: true }
+            : order
+        )
+      );
+
+      setReviewOrder(null);
+      alert('¡Gracias por tu calificación!');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      throw error;
+    }
   };
 
   // Funciones de estado (label, color, emoji) vienen de utils/orderStatus.js para consistencia
@@ -675,11 +709,33 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
                         </div>
                       )}
 
-                      {/* Total */}
+                      {/* Total and Review Button */}
                       <div className="flex justify-between items-center">
                         <span className="font-semibold text-gray-900">Total:</span>
                         <span className="text-xl font-bold text-gray-900">S/ {order.total.toFixed(2)}</span>
                       </div>
+
+                      {/* Review Button */}
+                      {order.reviewable && !order.reviewSubmitted && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setReviewOrder(order)}
+                            className="w-full bg-yellow-400 text-gray-900 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors flex items-center justify-center space-x-2"
+                          >
+                            <Star size={20} />
+                            <span>Calificar Pedido</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {order.reviewSubmitted && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex items-center justify-center space-x-2 text-green-600">
+                            <CheckCircle size={20} />
+                            <span className="font-semibold">Ya calificaste este pedido</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -867,6 +923,15 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Reseña */}
+      {reviewOrder && (
+        <ReviewModal
+          order={reviewOrder}
+          onClose={() => setReviewOrder(null)}
+          onSubmit={handleSubmitReview}
+        />
       )}
     </div>
   );

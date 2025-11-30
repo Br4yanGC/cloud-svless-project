@@ -1,15 +1,15 @@
 {
   "name": "restaurant-stepfunctions",
   "version": "1.0.0",
-  "description": "Step Functions for post-delivery review workflow",
+  "description": "Step Functions for enabling reviews after order delivery",
   "main": "index.js",
   "scripts": {
     "deploy": "serverless deploy",
-    "remove": "serverless remove",
-    "logs": "serverless logs -f"
+    "remove": "serverless remove"
   },
   "dependencies": {
-    "aws-sdk": "^2.1691.0"
+    "aws-sdk": "^2.1691.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "serverless": "^3.38.0",
