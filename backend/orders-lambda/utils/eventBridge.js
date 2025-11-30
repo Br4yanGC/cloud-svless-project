@@ -46,9 +46,10 @@ async function emitOrderCreated(order) {
  * Emit order.statusChanged event
  */
 async function emitOrderStatusChanged(order, oldStatus, newStatus) {
-  return emitEvent('order.statusChanged', {
+  return emitEvent('OrderStatusChanged', {
     orderId: order.id,
     orderNumber: order.orderNumber,
+    customerId: order.customerId,
     oldStatus,
     newStatus,
     timestamp: new Date().toISOString()

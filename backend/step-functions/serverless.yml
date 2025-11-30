@@ -114,3 +114,23 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+
+    # EventBridge Rule para disparar Step Function cuando pedido es entregado
+    EnableReviewWorkflowEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: "Trigger review workflow when order is delivered"
+        EventPattern:
+          source:
+            - restaurant.orders
+          detail-type:
+            - OrderStatusChanged
+          detail:
+            newStatus:
+              - entregado
+        State: ENABLED
+        Targets:
+          - Arn:
+              Ref: EnableReviewWorkflowStateMachine
+            RoleArn: arn:aws:iam::281043631139:role/LabRole
+            Id: EnableReviewWorkflowTarget
