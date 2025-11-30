@@ -144,8 +144,9 @@ const ReviewModal = ({ order, onClose, onSubmit }) => {
             <p className="text-sm font-semibold text-gray-700 mb-2">Resumen del Pedido:</p>
             <div className="space-y-1 text-sm text-gray-600">
               {order.items?.map((item, idx) => (
-                <div key={idx}>
-                  {item.quantity}x {item.productName}
+                <div key={idx} className="flex justify-between">
+                  <span>{item.quantity}x {item.name}</span>
+                  {item.size && <span className="text-gray-500 text-xs">({item.size})</span>}
                 </div>
               ))}
               <div className="pt-2 mt-2 border-t border-gray-300 font-semibold text-gray-900">
