@@ -12,8 +12,26 @@ provider:
   environment:
     PRODUCTS_TABLE: ${self:service}-products-${self:provider.stage}
     AUTH_API_URL: https://your-auth-api.execute-api.us-east-1.amazonaws.com/dev
+    IMAGES_BUCKET: restaurant-product-images-${self:provider.stage}
 
 functions:
+  # Subir imagen de producto (admin)
+  uploadImage:
+    handler: handlers/upload.uploadImage
+    description: Subir imagen de producto a S3
+    memorySize: 256
+    timeout: 30
+    events:
+      - http:
+          path: menu/upload
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: true
+
   # Listar productos del menú
   listMenu:
     handler: handlers/menu.list
@@ -118,6 +136,41 @@ functions:
 
 resources:
   Resources:
+    # Bucket S3 para imágenes de productos
+    ProductImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.IMAGES_BUCKET}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedMethods:
+                - GET
+                - HEAD
+              AllowedHeaders:
+                - '*'
+              MaxAge: 3600
+
+    # Política pública para leer imágenes
+    ProductImagesBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ProductImagesBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - s3:GetObject
+              Resource: !Sub '${ProductImagesBucket.Arn}/*'
+
     # Tabla DynamoDB para Productos
     ProductsTable:
       Type: AWS::DynamoDB::Table
