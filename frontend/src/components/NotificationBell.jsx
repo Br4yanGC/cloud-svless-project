@@ -41,6 +41,13 @@ const NotificationBell = ({ user, websocket }) => {
     return !!readNotifications[orderId];
   };
 
+  // Cargar contador inicial al montar el componente
+  useEffect(() => {
+    if (user) {
+      loadUnreadCount();
+    }
+  }, [user]);
+
   // Cargar notificaciones desde DynamoDB cuando se abre el panel
   useEffect(() => {
     if (showPanel && user) {
@@ -82,6 +89,25 @@ const NotificationBell = ({ user, websocket }) => {
       websocket.removeEventListener('message', handleNotification);
     };
   }, [websocket, user, showPanel]);
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await apiRequest(`${API_CONFIG.ENDPOINTS.ORDERS}`, {
+        method: 'GET'
+      }, 'ORDERS');
+
+      // Filtrar y convertir órdenes a notificaciones según el rol
+      const orders = response.orders || [];
+      const filteredNotifications = filterOrdersByRole(orders, user);
+      
+      // Calcular no leídas basadas en localStorage
+      const unread = filteredNotifications.filter(notif => !isNotificationRead(notif.orderId)).length;
+      setUnreadCount(unread);
+      
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
+  };
 
   const loadNotifications = async () => {
     try {
