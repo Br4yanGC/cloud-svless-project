@@ -47,7 +47,7 @@ Dashboard del restaurante:
 - Lambda (Microservicios)
 - DynamoDB (Base de datos)
 - EventBridge (Eventos)
-- Step Functions (Workflow)
+- Step Functions (Workflow de reseñas) ⭐ NUEVO
 - SES (Emails)
 - S3 (Imágenes)
 
@@ -55,8 +55,10 @@ Dashboard del restaurante:
 1. **auth-lambda** - Autenticación y usuarios
 2. **orders-lambda** - Gestión de pedidos ⭐ NUEVO
 3. **menu-lambda** - Catálogo de productos ⭐ NUEVO
-4. **notifications-lambda** - Envío de emails
-5. **websocket-lambda** - Actualizaciones en tiempo real
+4. **products-lambda** - Productos con imágenes S3 ⭐ NUEVO
+5. **notifications-lambda** - Envío de emails
+6. **websocket-lambda** - Actualizaciones en tiempo real
+7. **step-functions** - Workflow de reseñas post-entrega ⭐ NUEVO
 
 ---
 
@@ -94,8 +96,10 @@ cloud-svless-project/
 │   ├── auth-lambda/            # Autenticación
 │   ├── orders-lambda/          # ⭐ Gestión de pedidos
 │   ├── menu-lambda/            # ⭐ Catálogo de productos
+│   ├── products-lambda/        # ⭐ Productos con S3
 │   ├── notifications-lambda/   # Emails
-│   └── websocket-lambda/       # Tiempo real
+│   ├── websocket-lambda/       # Tiempo real
+│   └── step-functions/         # ⭐ Workflow de reseñas
 ```
 
 ---
@@ -112,6 +116,13 @@ serverless deploy --stage dev
 ### Menu Service
 ```bash
 cd backend/menu-lambda
+npm install
+serverless deploy --stage dev
+```
+
+### Step Functions (Review Workflow)
+```bash
+cd backend/step-functions
 npm install
 serverless deploy --stage dev
 ```

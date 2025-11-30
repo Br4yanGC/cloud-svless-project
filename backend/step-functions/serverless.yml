@@ -1,0 +1,181 @@
+service: restaurant-stepfunctions
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    STAGE: ${self:provider.stage}
+    USERS_TABLE: restaurant-users-${self:provider.stage}
+    ORDERS_TABLE: restaurant-orders-${self:provider.stage}
+    REVIEWS_TABLE: restaurant-reviews-${self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ORDERS_TABLE}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.REVIEWS_TABLE}
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource: "*"
+
+plugins:
+  - serverless-step-functions
+
+functions:
+  sendSatisfactionEmail:
+    handler: handlers/sendSatisfactionEmail.handler
+    description: Send satisfaction survey email after delivery
+    timeout: 30
+
+  checkReview:
+    handler: handlers/checkReview.handler
+    description: Check if customer left a review
+    timeout: 30
+
+  sendReviewReminder:
+    handler: handlers/sendReviewReminder.handler
+    description: Send reminder to leave review
+    timeout: 30
+
+  sendThankYouEmail:
+    handler: handlers/sendThankYouEmail.handler
+    description: Thank customer for their review
+    timeout: 30
+
+stepFunctions:
+  stateMachines:
+    reviewWorkflow:
+      name: ReviewWorkflow-${self:provider.stage}
+      definition:
+        Comment: "Post-delivery review request workflow"
+        StartAt: WaitAfterDelivery
+        States:
+          WaitAfterDelivery:
+            Type: Wait
+            Seconds: 600  # 10 minutos después de entrega
+            Next: SendSatisfactionEmail
+          
+          SendSatisfactionEmail:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [sendSatisfactionEmail, Arn]
+            Next: Wait24Hours
+            Retry:
+              - ErrorEquals:
+                  - States.ALL
+                IntervalSeconds: 60
+                MaxAttempts: 2
+                BackoffRate: 2
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                ResultPath: $.error
+                Next: WorkflowFailed
+          
+          Wait24Hours:
+            Type: Wait
+            Seconds: 86400  # 24 horas
+            Next: CheckIfReviewed
+          
+          CheckIfReviewed:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [checkReview, Arn]
+            Next: HasReview
+            Retry:
+              - ErrorEquals:
+                  - States.ALL
+                IntervalSeconds: 30
+                MaxAttempts: 2
+          
+          HasReview:
+            Type: Choice
+            Choices:
+              - Variable: $.hasReview
+                BooleanEquals: true
+                Next: SendThankYou
+              - Variable: $.hasReview
+                BooleanEquals: false
+                Next: SendReviewReminder
+            Default: WorkflowComplete
+          
+          SendReviewReminder:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [sendReviewReminder, Arn]
+            Next: WorkflowComplete
+            Retry:
+              - ErrorEquals:
+                  - States.ALL
+                IntervalSeconds: 60
+                MaxAttempts: 2
+          
+          SendThankYou:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [sendThankYouEmail, Arn]
+            Next: WorkflowComplete
+            Retry:
+              - ErrorEquals:
+                  - States.ALL
+                IntervalSeconds: 60
+                MaxAttempts: 2
+          
+          WorkflowComplete:
+            Type: Succeed
+          
+          WorkflowFailed:
+            Type: Fail
+            Cause: "Workflow execution failed"
+      events:
+        - eventBridge:
+            eventBus: restaurant-events-${self:provider.stage}
+            pattern:
+              source:
+                - restaurant.orders
+              detail-type:
+                - OrderStatusChanged
+              detail:
+                newStatus:
+                  - entregado
+
+resources:
+  Resources:
+    ReviewsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.REVIEWS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: orderId
+            AttributeType: S
+          - AttributeName: customerId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: orderId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: CustomerIdIndex
+            KeySchema:
+              - AttributeName: customerId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
