@@ -81,37 +81,56 @@ const NotificationBell = ({ user, websocket }) => {
     if (!user) return [];
 
     let relevantOrders = [];
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
 
     switch (user.role) {
       case 'cocinero':
-        // Órdenes nuevas (recibido, preparando)
-        relevantOrders = orders.filter(order => 
-          order.status === 'recibido' || order.status === 'preparando'
-        );
+        // Todas las órdenes que pasaron por cocina (últimas 24 horas)
+        relevantOrders = orders.filter(order => {
+          const orderTime = new Date(order.createdAt).getTime();
+          // Cualquier orden que haya sido recibida o preparada
+          return orderTime > twentyFourHoursAgo && 
+                 (order.status === 'recibido' || 
+                  order.status === 'preparando' || 
+                  order.status === 'empacado' || 
+                  order.status === 'en_camino' || 
+                  order.status === 'entregado');
+        });
         break;
 
       case 'despachador':
-        // Órdenes listas para empacar
-        relevantOrders = orders.filter(order => order.status === 'empacado');
+        // Todas las órdenes que llegaron a empacado (últimas 24 horas)
+        relevantOrders = orders.filter(order => {
+          const orderTime = new Date(order.createdAt).getTime();
+          // Órdenes que están o pasaron por empacado
+          return orderTime > twentyFourHoursAgo && 
+                 (order.status === 'empacado' || 
+                  order.status === 'en_camino' || 
+                  order.status === 'entregado');
+        });
         break;
 
       case 'repartidor':
-        // Órdenes asignadas a este repartidor
-        relevantOrders = orders.filter(order => 
-          order.status === 'en_camino' && order.deliveryPerson?.id === user.id
-        );
+        // Todas las órdenes asignadas a este repartidor (últimas 24 horas)
+        relevantOrders = orders.filter(order => {
+          const orderTime = new Date(order.createdAt).getTime();
+          return orderTime > twentyFourHoursAgo && 
+                 order.deliveryPerson?.id === user.id;
+        });
         break;
 
       case 'cliente':
-        // Órdenes del cliente
-        relevantOrders = orders.filter(order => order.customerId === user.id);
+        // Todas las órdenes del cliente (últimas 24 horas)
+        relevantOrders = orders.filter(order => {
+          const orderTime = new Date(order.createdAt).getTime();
+          return orderTime > twentyFourHoursAgo && order.customerId === user.id;
+        });
         break;
 
       case 'admin':
         // Todas las órdenes recientes (últimas 24 horas)
-        const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
         relevantOrders = orders.filter(order => 
-          new Date(order.createdAt).getTime() > oneDayAgo
+          new Date(order.createdAt).getTime() > twentyFourHoursAgo
         );
         break;
 
@@ -142,26 +161,27 @@ const NotificationBell = ({ user, websocket }) => {
   };
 
   const getNotificationMessage = (order, user) => {
+    const statusMessages = {
+      'recibido': 'Pedido recibido',
+      'preparando': 'En preparación',
+      'empacado': 'Listo para entregar',
+      'en_camino': 'En camino',
+      'entregado': 'Entregado'
+    };
+
     switch (user.role) {
       case 'cocinero':
-        if (order.status === 'recibido') return `Nuevo pedido recibido`;
-        if (order.status === 'preparando') return `Pedido en preparación`;
-        break;
+        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
       case 'despachador':
-        return `Pedido listo para empacar y asignar repartidor`;
+        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
       case 'repartidor':
-        return `Nuevo pedido asignado para entrega`;
+        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
       case 'cliente':
-        if (order.status === 'recibido') return `Tu pedido ha sido recibido`;
-        if (order.status === 'preparando') return `Tu pedido está en preparación`;
-        if (order.status === 'empacado') return `Tu pedido está listo`;
-        if (order.status === 'en_camino') return `Tu pedido está en camino`;
-        if (order.status === 'entregado') return `Tu pedido ha sido entregado`;
-        break;
+        return `Tu pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
       case 'admin':
-        return `Pedido #${order.orderNumber} - ${order.status}`;
+        return `Pedido #${order.orderNumber} - ${statusMessages[order.status] || order.status}`;
     }
-    return `Actualización de pedido`;
+    return `Pedido #${order.orderNumber}`;
   };
 
   const isOrderRead = (order, user) => {
