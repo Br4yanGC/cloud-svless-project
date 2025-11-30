@@ -65,6 +65,23 @@ function App() {
     setShowCart(false);
   };
 
+  const handleUpdateCartQuantity = (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      // If quantity is 0 or less, remove the item
+      const newCart = { ...cart };
+      delete newCart[productId];
+      setCart(newCart);
+    } else {
+      setCart({ ...cart, [productId]: newQuantity });
+    }
+  };
+
+  const handleRemoveFromCart = (productId) => {
+    const newCart = { ...cart };
+    delete newCart[productId];
+    setCart(newCart);
+  };
+
   const handleCheckout = async (orderData) => {
     try {
       console.log('Procesando pedido:', orderData);
@@ -140,6 +157,8 @@ function App() {
                 products={products}
                 onBack={handleBackToMenu}
                 onCheckout={handleCheckout}
+                onUpdateQuantity={handleUpdateCartQuantity}
+                onRemoveItem={handleRemoveFromCart}
                 onLogout={handleLogout}
                 currentUser={currentUser}
               />

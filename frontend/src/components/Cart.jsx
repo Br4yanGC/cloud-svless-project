@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Minus, MapPin, Phone, User, LogOut } from 'lucide-react';
 
-const Cart = ({ cart, products, onBack, onCheckout, onLogout, currentUser }) => {
+const Cart = ({ cart, products, onBack, onCheckout, onUpdateQuantity, onRemoveItem, onLogout, currentUser }) => {
   const [deliveryInfo, setDeliveryInfo] = useState({
     customerName: '',
     phone: '',
@@ -148,7 +148,9 @@ const Cart = ({ cart, products, onBack, onCheckout, onLogout, currentUser }) => 
                       <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
                         <button
                           onClick={() => {
-                            // TODO: Implement decrease quantity
+                            if (onUpdateQuantity) {
+                              onUpdateQuantity(item.id, item.quantity - 1);
+                            }
                           }}
                           className="p-1 hover:bg-gray-200 rounded"
                         >
@@ -157,7 +159,9 @@ const Cart = ({ cart, products, onBack, onCheckout, onLogout, currentUser }) => 
                         <span className="font-bold px-3">{item.quantity}</span>
                         <button
                           onClick={() => {
-                            // TODO: Implement increase quantity
+                            if (onUpdateQuantity) {
+                              onUpdateQuantity(item.id, item.quantity + 1);
+                            }
                           }}
                           className="p-1 hover:bg-gray-200 rounded"
                         >
@@ -167,7 +171,9 @@ const Cart = ({ cart, products, onBack, onCheckout, onLogout, currentUser }) => 
 
                       <button
                         onClick={() => {
-                          // TODO: Implement remove item
+                          if (onRemoveItem) {
+                            onRemoveItem(item.id);
+                          }
                         }}
                         className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
                       >
