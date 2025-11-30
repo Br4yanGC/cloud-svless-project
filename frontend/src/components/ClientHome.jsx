@@ -729,7 +729,7 @@ const ClientHome = ({ onAddToCart, currentUser, onLogout, orderCreated, onOrderV
             <div className="p-6">
               <div className="text-center mb-6">
                 <p className="text-gray-600 mb-2">Número de pedido</p>
-                <p className="text-3xl font-bold text-gray-900">#{orderConfirmation.orderNumber}</p>
+                <p className="text-3xl font-bold text-gray-900">#{orderConfirmation.id.substring(0, 8)}</p>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
