@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, Package, Truck, CheckCircle, Clock, MapPin, X } from 'lucide-react';
+import { LogOut, User, Package, Truck, CheckCircle, Clock, MapPin, X, Search } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
 import NotificationBell from './NotificationBell';
@@ -8,7 +8,8 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ready');
-  const [websocket, setWebsocket] = useState(null); // ready, assigned, delivered
+  const [websocket, setWebsocket] = useState(null);
+  const [searchTerm, setSearchTerm] = useState(''); // ready, assigned, delivered
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
@@ -183,6 +184,15 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
   // Funciones getStatusColor y getStatusLabel ahora vienen de utils/orderStatus.js
 
   const filteredOrders = orders.filter(order => {
+    // Filtro por búsqueda de ID
+    if (searchTerm) {
+      const shortId = order.id.substring(0, 8).toLowerCase();
+      const search = searchTerm.toLowerCase().replace('#', '');
+      const matchesSearch = shortId.includes(search) || order.id.toLowerCase().includes(search);
+      if (!matchesSearch) return false;
+    }
+    
+    // Filtro por estado
     if (filter === 'ready') return order.status === 'empacado';
     if (filter === 'assigned') return order.status === 'en_camino';
     if (filter === 'delivered') return order.status === 'entregado';
@@ -263,6 +273,20 @@ const DispatchDashboard = ({ currentUser, onLogout }) => {
               </div>
               <CheckCircle className="text-gray-600" size={40} />
             </div>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Buscar por ID de pedido (#4f6e8696)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
           </div>
         </div>
 

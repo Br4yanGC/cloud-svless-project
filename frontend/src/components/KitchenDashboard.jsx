@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, Clock, CheckCircle, ChefHat, Package } from 'lucide-react';
+import { LogOut, User, Clock, CheckCircle, ChefHat, Package, Search } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor } from '../utils/orderStatus';
 import NotificationBell from './NotificationBell';
@@ -9,6 +9,7 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending'); // pending, in-progress, completed
   const [websocket, setWebsocket] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadOrders();
@@ -124,6 +125,15 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
   };
 
   const filteredOrders = orders.filter(order => {
+    // Filtro por búsqueda de ID
+    if (searchTerm) {
+      const shortId = order.id.substring(0, 8).toLowerCase();
+      const search = searchTerm.toLowerCase().replace('#', '');
+      const matchesSearch = shortId.includes(search) || order.id.toLowerCase().includes(search);
+      if (!matchesSearch) return false;
+    }
+    
+    // Filtro por estado
     if (filter === 'pending') return order.status === 'recibido';
     if (filter === 'in-progress') return order.status === 'cocinando';
     if (filter === 'completed') return order.status === 'empacado' || order.status === 'en_camino' || order.status === 'entregado';
@@ -207,6 +217,20 @@ const KitchenDashboard = ({ currentUser, onLogout }) => {
               </div>
               <CheckCircle className="text-green-600" size={40} />
             </div>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Buscar por ID de pedido (#4f6e8696)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
           </div>
         </div>
 

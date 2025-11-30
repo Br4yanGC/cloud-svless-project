@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, X, Search } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 
 const NotificationBell = ({ user, websocket }) => {
@@ -7,7 +7,6 @@ const NotificationBell = ({ user, websocket }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPanel, setShowPanel] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Obtener clave de localStorage específica para el usuario
   const getReadNotificationsKey = () => {
@@ -394,20 +393,6 @@ const NotificationBell = ({ user, websocket }) => {
             </button>
           </div>
 
-          {/* Search Bar */}
-          <div className="p-3 border-b border-gray-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar por ID de pedido (#4f6e8696)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-              />
-            </div>
-          </div>
-
           {/* Notifications List */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
@@ -421,27 +406,13 @@ const NotificationBell = ({ user, websocket }) => {
                 <p className="font-medium">No hay notificaciones</p>
                 <p className="text-sm mt-1">Estarás al tanto de los nuevos pedidos</p>
               </div>
-            ) : (() => {
-              const filteredNotifications = notifications.filter(notification => {
-                if (!searchTerm) return true;
-                const shortId = notification.orderId.substring(0, 8).toLowerCase();
-                const search = searchTerm.toLowerCase().replace('#', '');
-                return shortId.includes(search) || notification.orderId.toLowerCase().includes(search);
-              });
-
-              return filteredNotifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <Search size={48} className="mx-auto mb-3 text-gray-300" />
-                  <p className="font-medium">No se encontraron resultados</p>
-                  <p className="text-sm mt-1">Intenta con otro ID de pedido</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-200">
-                  {filteredNotifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className="p-4 hover:bg-gray-50 transition-colors"
-                    >
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className="p-4 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
@@ -463,10 +434,9 @@ const NotificationBell = ({ user, websocket }) => {
                       </div>
                     </div>
                   </div>
-                  ))}
-                </div>
-              );
-            })()}
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

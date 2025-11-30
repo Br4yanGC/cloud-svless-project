@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Calendar, Eye, X, ArrowLeft, FileText } from 'lucide-react';
+import { LogOut, User, TrendingUp, Package, Users, DollarSign, ShoppingBag, Calendar, Eye, X, ArrowLeft, FileText, Search } from 'lucide-react';
 import { apiRequest, API_CONFIG } from '../config';
 import { getStatusLabel, getStatusColor, getStatusEmoji } from '../utils/orderStatus';
 import OrderTimeline from './OrderTimeline';
@@ -23,6 +23,7 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
   const [showHistoryView, setShowHistoryView] = useState(false); // Vista dedicada de historial
   const [selectedOrder, setSelectedOrder] = useState(null); // Para modal de detalles
   const [websocket, setWebsocket] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadDashboardData();
@@ -634,6 +635,21 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                     <span>Pedidos Activos ({allOrders.filter(o => o.status !== 'entregado').length})</span>
                   </div>
                 </h2>
+
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                      type="text"
+                      placeholder="Buscar por ID de pedido (#4f6e8696)..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -650,7 +666,16 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {allOrders.filter(o => o.status !== 'entregado').map(order => (
+                      {allOrders.filter(o => {
+                        if (o.status === 'entregado') return false;
+                        if (searchTerm) {
+                          const shortId = o.id.substring(0, 8).toLowerCase();
+                          const search = searchTerm.toLowerCase().replace('#', '');
+                          const matchesSearch = shortId.includes(search) || o.id.toLowerCase().includes(search);
+                          if (!matchesSearch) return false;
+                        }
+                        return true;
+                      }).map(order => (
                         <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                           <td className="py-3 px-4 font-mono text-sm font-semibold text-gray-900">#{order.id.slice(0, 8)}</td>
                           <td className="py-3 px-4">{order.customerName || order.deliveryInfo?.customerName || 'Cliente'}</td>
@@ -688,7 +713,16 @@ const AdminRestaurantDashboard = ({ currentUser, onLogout }) => {
                       ))}
                     </tbody>
                   </table>
-                  {allOrders.filter(o => o.status !== 'entregado').length === 0 && (
+                  {allOrders.filter(o => {
+                    if (o.status === 'entregado') return false;
+                    if (searchTerm) {
+                      const shortId = o.id.substring(0, 8).toLowerCase();
+                      const search = searchTerm.toLowerCase().replace('#', '');
+                      const matchesSearch = shortId.includes(search) || o.id.toLowerCase().includes(search);
+                      if (!matchesSearch) return false;
+                    }
+                    return true;
+                  }).length === 0 && (
                     <div className="text-center py-12">
                       <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-500">No hay pedidos activos</p>
