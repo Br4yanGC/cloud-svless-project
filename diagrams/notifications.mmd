@@ -1,0 +1,65 @@
+architecture-beta
+group notifications(logos:aws-lambda)[Notifications Service]
+%% === NOTIFICATIONS SERVICE ===
+service notificationsApi(logos:aws-api-gateway)[notificationsApi] in notifications
+service notifyCreate(logos:aws-lambda)[notifyCreate] in notifications
+service notifyList(logos:aws-lambda)[notifyList] in notifications
+service notifyMarkAsRead(logos:aws-lambda)[notifyMarkAsRead] in notifications
+service notifySendEmail(logos:aws-lambda)[notifySendEmail] in notifications
+service notifyListSubscriptions(logos:aws-lambda)[notifyListSubscriptions] in notifications
+service notifySubscribeEmail(logos:aws-lambda)[notifySubscribeEmail] in notifications
+service notifyUnsubscribe(logos:aws-lambda)[notifyUnsubscribe] in notifications
+service notifyDB(logos:aws-dynamodb)[notifyDB] in notifications
+service notifySNS(logos:aws-sns)[notifySNS] in notifications
+
+
+junction notify_centerLeft in notifications
+
+junction notify_bottomLeft in notifications
+junction notify_bottomLeft2 in notifications
+junction notify_bottomLeft3 in notifications
+junction notify_topLeft in notifications
+junction notify_topLeft2 in notifications
+junction notify_topLeft3 in notifications
+
+junction notify_centerRight in notifications
+
+junction notify_bottomRight in notifications
+junction notify_bottomRight2 in notifications
+junction notify_bottomRight3 in notifications
+junction notify_topRight in notifications
+junction notify_topRight2 in notifications
+junction notify_topRight3 in notifications
+
+notify_centerLeft:T -- B:notify_topLeft
+notify_topLeft:T -- B:notify_topLeft2
+notify_topLeft2:T -- B:notify_topLeft3
+notify_centerLeft:B -- T:notify_bottomLeft
+notify_bottomLeft:B -- T:notify_bottomLeft2
+notify_bottomLeft2:B -- T:notify_bottomLeft3
+
+notify_centerRight:T -- B:notify_topRight
+notify_topRight:T -- B:notify_topRight2
+notify_topRight2:T -- B:notify_topRight3
+notify_centerRight:B -- T:notify_bottomRight
+notify_bottomRight:B -- T:notify_bottomRight2
+notify_bottomRight2:B -- T:notify_bottomRight3
+
+notificationsApi:R -- L:notify_centerLeft
+notify_centerRight:R -- L:notifyDB
+
+notify_bottomLeft:R -- L:notifyList
+notify_bottomLeft2:R -- L:notifyCreate
+notify_bottomLeft3:R -- L:notifyMarkAsRead
+notify_topLeft:R -- L:notifySendEmail
+notify_topLeft2:R -- L:notifyListSubscriptions
+notify_topLeft3:R -- L:notifySubscribeEmail
+notify_centerLeft:R -- L:notifyUnsubscribe
+
+notifyList:R -- L:notify_bottomRight
+notifyCreate:R -- L:notify_bottomRight2
+notifyMarkAsRead:R -- L:notify_bottomRight3
+notifySendEmail:R -- L:notify_topRight
+notifyListSubscriptions:R -- L:notify_topRight2
+notifySubscribeEmail:R -- L:notify_topRight3
+notifyUnsubscribe:R -- L:notify_centerRight

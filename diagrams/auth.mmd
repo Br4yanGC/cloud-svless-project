@@ -1,0 +1,62 @@
+architecture-beta
+group auth[Auth Service]
+%% === AUTH SERVICE ===
+service authApi(logos:aws-api-gateway)[API Gateway] in auth
+service authRegister(logos:aws-lambda)[Register] in auth
+service authRegisterPublic(logos:aws-lambda)[Register Public] in auth
+service authLogin(logos:aws-lambda)[Login] in auth
+service authGetProfile(logos:aws-lambda)[Get Profile] in auth
+service authValidateToken(logos:aws-lambda)[Validate token] in auth
+service authlistAdmins(logos:aws-lambda)[List Admins] in auth
+service authListDrivers(logos:aws-lambda)[List Drivers] in auth
+service usersDB(logos:aws-dynamodb)[t_users] in auth
+
+junction auth_centerLeft in auth
+
+junction auth_bottomLeft in auth
+junction auth_bottomLeft2 in auth
+junction auth_bottomLeft3 in auth
+junction auth_topLeft in auth
+junction auth_topLeft2 in auth
+junction auth_topLeft3 in auth
+
+junction auth_centerRight in auth
+junction auth_bottomRight in auth
+junction auth_bottomRight2 in auth
+junction auth_bottomRight3 in auth
+junction auth_topRight in auth
+junction auth_topRight2 in auth
+junction auth_topRight3 in auth
+
+auth_centerLeft:R -- L:authValidateToken
+
+authApi:R -- L:auth_centerLeft
+auth_centerRight:R -- L:usersDB
+
+auth_centerLeft:T -- B:auth_topLeft
+auth_topLeft:T -- B:auth_topLeft2
+auth_topLeft2:T -- B:auth_topLeft3
+auth_centerLeft:B -- T:auth_bottomLeft
+auth_bottomLeft:B -- T:auth_bottomLeft2
+auth_bottomLeft2:B -- T:auth_bottomLeft3
+
+auth_centerRight:T -- B:auth_topRight
+auth_topRight:T -- B:auth_topRight2
+auth_topRight2:T -- B:auth_topRight3
+auth_centerRight:B -- T:auth_bottomRight
+auth_bottomRight:B -- T:auth_bottomRight2
+auth_bottomRight2:B -- T:auth_bottomRight3
+ 
+auth_topLeft:R -- L:authRegister
+auth_topLeft2:R -- L:authRegisterPublic
+auth_topLeft3:R -- L:authLogin
+auth_bottomLeft:R -- L:authGetProfile
+auth_bottomLeft2:R -- L:authlistAdmins
+auth_bottomLeft3:R -- L:authListDrivers
+
+authRegister:R -- L:auth_topRight
+authRegisterPublic:R -- L:auth_topRight2
+authLogin:R -- L:auth_topRight3
+authGetProfile:R -- L:auth_bottomRight
+authlistAdmins:R -- L:auth_bottomRight2
+authListDrivers:R -- L:auth_bottomRight3

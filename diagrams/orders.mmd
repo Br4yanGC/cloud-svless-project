@@ -1,0 +1,89 @@
+architecture-beta
+group orders(logos:aws-lambda)[Orders Service]
+%% === ORDERS SERVICE ===
+service ordersApi(logos:aws-api-gateway)[orders Api] in orders
+service ordersCreate(logos:aws-lambda)[orders Create] in orders
+service ordersList(logos:aws-lambda)[orders List] in orders
+service ordersGetById(logos:aws-lambda)[orders Get By Id] in orders
+service ordersUpdateStatus(logos:aws-lambda)[orders Update Status] in orders
+service ordersAssign(logos:aws-lambda)[orders Assign] in orders
+service ordersAssignDriver(logos:aws-lambda)[orders Assign Driver] in orders
+service ordersMyOrders(logos:aws-lambda)[orders My Orders] in orders
+service ordersMyAssignments(logos:aws-lambda)[orders My Assignments] in orders
+service ordersCancelOrder(logos:aws-lambda)[orders Cancel Order] in orders
+service ordersDashboardMetrics(logos:aws-lambda)[orders Dashboard Metrics] in orders
+service ordersDB(logos:aws-dynamodb)[orders DB] in orders
+%%service eventBus(logos:aws-eventbridge)[event Bus] in orders
+
+
+junction orders_centerLeft in orders
+
+junction orders_bottomLeft in orders
+junction orders_bottomLeft2 in orders
+junction orders_bottomLeft3 in orders
+junction orders_bottomLeft4 in orders
+junction orders_bottomLeft5 in orders
+junction orders_topLeft in orders
+junction orders_topLeft2 in orders
+junction orders_topLeft3 in orders
+junction orders_topLeft4 in orders
+junction orders_topLeft5 in orders
+
+junction orders_centerRight in orders
+
+junction orders_bottomRight in orders
+junction orders_bottomRight2 in orders
+junction orders_bottomRight3 in orders
+junction orders_bottomRight4 in orders
+junction orders_bottomRight5 in orders
+junction orders_topRight in orders
+junction orders_topRight2 in orders
+junction orders_topRight3 in orders
+junction orders_topRight4 in orders
+junction orders_topRight5 in orders
+
+orders_centerLeft:T -- B:orders_topLeft
+orders_topLeft:T -- B:orders_topLeft2
+orders_topLeft2:T -- B:orders_topLeft3
+orders_topLeft3:T -- B:orders_topLeft4
+orders_topLeft4:T -- B:orders_topLeft5
+orders_centerLeft:B -- T:orders_bottomLeft
+orders_bottomLeft:B -- T:orders_bottomLeft2
+orders_bottomLeft2:B -- T:orders_bottomLeft3
+orders_bottomLeft3:B -- T:orders_bottomLeft4
+orders_bottomLeft4:B -- T:orders_bottomLeft5
+orders_centerRight:T -- B:orders_topRight
+orders_topRight:T -- B:orders_topRight2
+orders_topRight2:T -- B:orders_topRight3
+orders_topRight3:T -- B:orders_topRight4
+orders_topRight4:T -- B:orders_topRight5
+orders_centerRight:B -- T:orders_bottomRight
+orders_bottomRight:B -- T:orders_bottomRight2
+orders_bottomRight2:B -- T:orders_bottomRight3
+orders_bottomRight3:B -- T:orders_bottomRight4
+orders_bottomRight4:B -- T:orders_bottomRight5
+
+ordersApi:R -- L:orders_centerLeft
+orders_centerRight:R -- L:ordersDB
+
+
+orders_bottomLeft:R -- L:ordersGetById
+orders_bottomLeft2:R -- L:ordersCreate
+orders_bottomLeft3:R -- L:ordersList
+orders_bottomLeft4:R -- L:ordersCancelOrder
+orders_bottomLeft5:R -- L:ordersDashboardMetrics
+orders_topLeft:R -- L:ordersUpdateStatus
+orders_topLeft2:R -- L:ordersAssign
+orders_topLeft3:R -- L:ordersAssignDriver
+orders_topLeft4:R -- L:ordersMyOrders
+orders_topLeft5:R -- L:ordersMyAssignments
+ordersGetById:R -- L:orders_bottomRight
+ordersCreate:R -- L:orders_bottomRight2
+ordersList:R -- L:orders_bottomRight3
+ordersCancelOrder:R -- L:orders_bottomRight4
+ordersDashboardMetrics:R -- L:orders_bottomRight5
+ordersUpdateStatus:R -- L:orders_topRight
+ordersAssign:R -- L:orders_topRight2
+ordersAssignDriver:R -- L:orders_topRight3
+ordersMyOrders:R -- L:orders_topRight4
+ordersMyAssignments:R -- L:orders_topRight5

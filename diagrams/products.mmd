@@ -1,0 +1,82 @@
+architecture-beta
+group products(logos:aws-lambda)[Products Service]
+%% === PRODUCTS (restaurant-products-service) ===
+service productsApi(logos:aws-api-gateway)[productsApi] in products
+service listProducts(logos:aws-lambda)[listProducts] in products
+service getProduct(logos:aws-lambda)[getProduct] in products
+service createProduct(logos:aws-lambda)[createProduct] in products
+service updateProduct(logos:aws-lambda)[updateProduct] in products
+service deleteProduct(logos:aws-lambda)[deleteProduct] in products
+service uploadImage(logos:aws-lambda)[uploadImage] in products
+service getImage(logos:aws-lambda)[getImage] in products
+service deleteImage(logos:aws-lambda)[deleteImage] in products
+service authorizerFunc(logos:aws-lambda)[authorizerFunc] in products
+
+service ProductsTable(logos:aws-dynamodb)[ProductsTable] in products
+service ImagesBucket(logos:aws-s3)[ImagesBucket] in products
+
+
+junction products_centerLeft in products
+
+junction products_bottomLeft in products
+junction products_bottomLeft2 in products
+junction products_bottomLeft3 in products
+junction products_bottomLeft4 in products
+junction products_bottomLeft5 in products
+junction products_topLeft in products
+junction products_topLeft2 in products
+junction products_topLeft3 in products
+junction products_topLeft4 in products
+
+junction products_centerRight in products
+
+junction products_bottomRight in products
+junction products_bottomRight2 in products
+junction products_bottomRight3 in products
+junction products_bottomRight4 in products
+junction products_topRight in products
+junction products_topRight2 in products
+junction products_topRight3 in products
+junction products_topRight4 in products
+
+products_centerLeft:T -- B:products_topLeft
+products_topLeft:T -- B:products_topLeft2
+products_topLeft2:T -- B:products_topLeft3
+products_topLeft3:T -- B:products_topLeft4
+products_centerLeft:B -- T:products_bottomLeft
+products_bottomLeft:B -- T:products_bottomLeft2
+products_bottomLeft2:B -- T:products_bottomLeft3
+products_bottomLeft3:B -- T:products_bottomLeft4
+products_centerRight:T -- B:products_topRight
+products_topRight:T -- B:products_topRight2
+products_topRight2:T -- B:products_topRight3
+products_topRight3:T -- B:products_topRight4
+products_centerRight:B -- T:products_bottomRight
+products_bottomRight:B -- T:products_bottomRight2
+products_bottomRight2:B -- T:products_bottomRight3
+products_bottomRight3:B -- T:products_bottomRight4
+
+productsApi:R -- L:products_centerLeft
+products_centerRight:R -- L:ProductsTable
+
+products_bottomLeft:R -- L:getProduct
+products_bottomLeft2:R -- L:createProduct
+products_bottomLeft3:R -- L:listProducts
+products_bottomLeft4:R -- L:deleteProduct
+products_topLeft:R -- L:uploadImage
+products_topLeft2:R -- L:getImage
+products_topLeft3:R -- L:deleteImage
+products_topLeft4:R -- L:authorizerFunc
+getProduct:R -- L:products_bottomRight
+createProduct:R -- L:products_bottomRight2
+listProducts:R -- L:products_bottomRight3
+deleteProduct:R -- L:products_bottomRight4
+uploadImage:R -- L:products_topRight
+getImage:R -- L:products_topRight2
+deleteImage:R -- L:products_topRight3
+authorizerFunc:R -- L:products_topRight4
+
+products_centerLeft:R -- L:updateProduct
+updateProduct:R -- L:products_centerRight
+
+products_topRight:R -- L:ImagesBucket

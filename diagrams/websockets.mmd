@@ -1,0 +1,26 @@
+architecture-beta
+group websocket(logos:aws-lambda)[Websocket Service]    
+%% === WEBSOCKET SERVICE ===
+service wsGateway(logos:aws-api-gateway)[Gateway] in websocket
+service wsConnect(logos:aws-lambda)[Connect] in websocket
+service wsDisconnect(logos:aws-lambda)[Disconnect] in websocket
+service wsMessageHandler(logos:aws-lambda)[Message Handler] in websocket
+service wsBroadcast(logos:aws-lambda)[Broadcast] in websocket
+
+junction ws_centerLeft in websocket
+
+junction ws_bottomLeft in websocket
+junction ws_bottomLeft2 in websocket
+junction ws_topLeft in websocket
+junction ws_topLeft2 in websocket
+
+ws_centerLeft:T -- B:ws_topLeft
+ws_topLeft:T -- B:ws_topLeft2
+ws_centerLeft:B -- T:ws_bottomLeft
+ws_bottomLeft:B -- T:ws_bottomLeft2
+
+wsGateway:R -- L:ws_centerLeft
+ws_bottomLeft:R -- L:wsConnect
+ws_bottomLeft2:R -- L:wsDisconnect
+ws_topLeft:R -- L:wsMessageHandler
+ws_topLeft2:R -- L:wsBroadcast
