@@ -1,0 +1,396 @@
+architecture-beta
+%% === GROUPS (MICROSERVICES) ===
+
+group auth[Auth Service]
+group menu(logos:aws-lambda)[Menu Service]
+group notifications(logos:aws-lambda)[Notifications Service]
+group orders(logos:aws-lambda)[Orders Service]
+group websocket(logos:aws-lambda)[Websocket Service]    
+group products(logos:aws-lambda)[Products Service]
+
+%% === AUTH SERVICE ===
+service authApi(logos:aws-api-gateway)[API Gateway] in auth
+service authRegister(logos:aws-lambda)[Register] in auth
+service authRegisterPublic(logos:aws-lambda)[Register Public] in auth
+service authLogin(logos:aws-lambda)[Login] in auth
+service authGetProfile(logos:aws-lambda)[Get Profile] in auth
+service authValidateToken(logos:aws-lambda)[Validate token] in auth
+service authlistAdmins(logos:aws-lambda)[List Admins] in auth
+service authListDrivers(logos:aws-lambda)[List Drivers] in auth
+service usersDB(logos:aws-dynamodb)[t_users] in auth
+
+junction auth_centerLeft in auth
+
+junction auth_bottomLeft in auth
+junction auth_bottomLeft2 in auth
+junction auth_bottomLeft3 in auth
+junction auth_topLeft in auth
+junction auth_topLeft2 in auth
+junction auth_topLeft3 in auth
+
+junction auth_centerRight in auth
+junction auth_bottomRight in auth
+junction auth_bottomRight2 in auth
+junction auth_bottomRight3 in auth
+junction auth_topRight in auth
+junction auth_topRight2 in auth
+junction auth_topRight3 in auth
+
+auth_centerLeft:R -- L:authValidateToken
+
+authApi:R -- L:auth_centerLeft
+auth_centerRight:R -- L:usersDB
+
+auth_centerLeft:T -- B:auth_topLeft
+auth_topLeft:T -- B:auth_topLeft2
+auth_topLeft2:T -- B:auth_topLeft3
+auth_centerLeft:B -- T:auth_bottomLeft
+auth_bottomLeft:B -- T:auth_bottomLeft2
+auth_bottomLeft2:B -- T:auth_bottomLeft3
+
+auth_centerRight:T -- B:auth_topRight
+auth_topRight:T -- B:auth_topRight2
+auth_topRight2:T -- B:auth_topRight3
+auth_centerRight:B -- T:auth_bottomRight
+auth_bottomRight:B -- T:auth_bottomRight2
+auth_bottomRight2:B -- T:auth_bottomRight3
+ 
+auth_topLeft:R -- L:authRegister
+auth_topLeft2:R -- L:authRegisterPublic
+auth_topLeft3:R -- L:authLogin
+auth_bottomLeft:R -- L:authGetProfile
+auth_bottomLeft2:R -- L:authlistAdmins
+auth_bottomLeft3:R -- L:authListDrivers
+
+authRegister:R -- L:auth_topRight
+authRegisterPublic:R -- L:auth_topRight2
+authLogin:R -- L:auth_topRight3
+authGetProfile:R -- L:auth_bottomRight
+authlistAdmins:R -- L:auth_bottomRight2
+authListDrivers:R -- L:auth_bottomRight3
+
+
+%% === MENU SERVICE ===
+service menuApi(logos:aws-api-gateway)[menuApi] in menu
+service menuUploadImage(logos:aws-lambda)[menuUploadImage] in menu
+service menuList(logos:aws-lambda)[menuList] in menu
+service menuGetById(logos:aws-lambda)[menuGetById] in menu
+service menuCreate(logos:aws-lambda)[menuCreate] in menu
+service menuUpdate(logos:aws-lambda)[menuUpdate] in menu
+service menuDelete(logos:aws-lambda)[menuDelete] in menu
+service menuToggleAvailability(logos:aws-lambda)[menuToggleAvailability] in menu
+
+service productsDB(logos:aws-dynamodb)[productsDB] in menu
+service imagesBucket(logos:aws-s3)[imagesBucket] in menu
+
+junction menu_centerLeft in menu
+
+junction menu_bottomLeft in menu
+junction menu_bottomLeft2 in menu
+junction menu_bottomLeft3 in menu
+junction menu_topLeft in menu
+junction menu_topLeft2 in menu
+junction menu_topLeft3 in menu
+
+junction menu_centerRight in menu
+
+junction menu_bottomRight in menu
+junction menu_bottomRight2 in menu
+junction menu_bottomRight3 in menu
+junction menu_topRight in menu
+junction menu_topRight2 in menu
+junction menu_topRight3 in menu
+
+menu_centerLeft:T -- B:menu_topLeft
+menu_topLeft:T -- B:menu_topLeft2
+menu_topLeft2:T -- B:menu_topLeft3
+menu_centerLeft:B -- T:menu_bottomLeft
+menu_bottomLeft:B -- T:menu_bottomLeft2
+menu_bottomLeft2:B -- T:menu_bottomLeft3
+
+menu_centerRight:T -- B:menu_topRight
+menu_topRight:T -- B:menu_topRight2
+menu_topRight2:T -- B:menu_topRight3
+menu_centerRight:B -- T:menu_bottomRight
+menu_bottomRight:B -- T:menu_bottomRight2
+menu_bottomRight2:B -- T:menu_bottomRight3
+ 
+
+menuApi:R -- L:menu_centerLeft
+menu_centerRight:R -- L:productsDB
+
+menu_bottomLeft:R -- L:menuGetById
+menu_bottomLeft2:R -- L:menuCreate
+menu_bottomLeft3:R -- L:menuUpdate
+menu_topLeft:R -- L:menuUploadImage
+menu_topLeft2:R -- L:menuList
+menu_topLeft3:R -- L:menuDelete
+
+menuGetById:R -- L:menu_bottomRight
+menuCreate:R -- L:menu_bottomRight2
+menuUpdate:R -- L:menu_bottomRight3
+menuUploadImage:R -- L:menu_topRight
+menuList:R -- L:menu_topRight2
+menuDelete:R -- L:menu_topRight3
+
+menu_centerLeft:R -- L:menuToggleAvailability
+menuToggleAvailability:R -- L:menu_centerRight
+
+menu_topRight:R -- L:imagesBucket
+
+%% === NOTIFICATIONS SERVICE ===
+service notificationsApi(logos:aws-api-gateway)[notificationsApi] in notifications
+service notifyCreate(logos:aws-lambda)[notifyCreate] in notifications
+service notifyList(logos:aws-lambda)[notifyList] in notifications
+service notifyMarkAsRead(logos:aws-lambda)[notifyMarkAsRead] in notifications
+service notifySendEmail(logos:aws-lambda)[notifySendEmail] in notifications
+service notifyListSubscriptions(logos:aws-lambda)[notifyListSubscriptions] in notifications
+service notifySubscribeEmail(logos:aws-lambda)[notifySubscribeEmail] in notifications
+service notifyUnsubscribe(logos:aws-lambda)[notifyUnsubscribe] in notifications
+service notifyDB(logos:aws-dynamodb)[notifyDB] in notifications
+service notifySNS(logos:aws-sns)[notifySNS] in notifications
+
+
+junction notify_centerLeft in notifications
+
+junction notify_bottomLeft in notifications
+junction notify_bottomLeft2 in notifications
+junction notify_bottomLeft3 in notifications
+junction notify_topLeft in notifications
+junction notify_topLeft2 in notifications
+junction notify_topLeft3 in notifications
+
+junction notify_centerRight in notifications
+
+junction notify_bottomRight in notifications
+junction notify_bottomRight2 in notifications
+junction notify_bottomRight3 in notifications
+junction notify_topRight in notifications
+junction notify_topRight2 in notifications
+junction notify_topRight3 in notifications
+
+notify_centerLeft:T -- B:notify_topLeft
+notify_topLeft:T -- B:notify_topLeft2
+notify_topLeft2:T -- B:notify_topLeft3
+notify_centerLeft:B -- T:notify_bottomLeft
+notify_bottomLeft:B -- T:notify_bottomLeft2
+notify_bottomLeft2:B -- T:notify_bottomLeft3
+
+notify_centerRight:T -- B:notify_topRight
+notify_topRight:T -- B:notify_topRight2
+notify_topRight2:T -- B:notify_topRight3
+notify_centerRight:B -- T:notify_bottomRight
+notify_bottomRight:B -- T:notify_bottomRight2
+notify_bottomRight2:B -- T:notify_bottomRight3
+
+notificationsApi:R -- L:notify_centerLeft
+notify_centerRight:R -- L:notifyDB
+
+notify_bottomLeft:R -- L:notifyList
+notify_bottomLeft2:R -- L:notifyCreate
+notify_bottomLeft3:R -- L:notifyMarkAsRead
+notify_topLeft:R -- L:notifySendEmail
+notify_topLeft2:R -- L:notifyListSubscriptions
+notify_topLeft3:R -- L:notifySubscribeEmail
+notify_centerLeft:R -- L:notifyUnsubscribe
+
+notifyList:R -- L:notify_bottomRight
+notifyCreate:R -- L:notify_bottomRight2
+notifyMarkAsRead:R -- L:notify_bottomRight3
+notifySendEmail:R -- L:notify_topRight
+notifyListSubscriptions:R -- L:notify_topRight2
+notifySubscribeEmail:R -- L:notify_topRight3
+notifyUnsubscribe:R -- L:notify_centerRight
+%% === ORDERS SERVICE ===
+service ordersApi(logos:aws-api-gateway)[orders Api] in orders
+service ordersCreate(logos:aws-lambda)[orders Create] in orders
+service ordersList(logos:aws-lambda)[orders List] in orders
+service ordersGetById(logos:aws-lambda)[orders Get By Id] in orders
+service ordersUpdateStatus(logos:aws-lambda)[orders Update Status] in orders
+service ordersAssign(logos:aws-lambda)[orders Assign] in orders
+service ordersAssignDriver(logos:aws-lambda)[orders Assign Driver] in orders
+service ordersMyOrders(logos:aws-lambda)[orders My Orders] in orders
+service ordersMyAssignments(logos:aws-lambda)[orders My Assignments] in orders
+service ordersCancelOrder(logos:aws-lambda)[orders Cancel Order] in orders
+service ordersDashboardMetrics(logos:aws-lambda)[orders Dashboard Metrics] in orders
+service ordersDB(logos:aws-dynamodb)[orders DB] in orders
+service eventBus(logos:aws-eventbridge)[event Bus] in orders
+
+
+junction orders_centerLeft in orders
+
+junction orders_bottomLeft in orders
+junction orders_bottomLeft2 in orders
+junction orders_bottomLeft3 in orders
+junction orders_bottomLeft4 in orders
+junction orders_bottomLeft5 in orders
+junction orders_topLeft in orders
+junction orders_topLeft2 in orders
+junction orders_topLeft3 in orders
+junction orders_topLeft4 in orders
+junction orders_topLeft5 in orders
+
+junction orders_centerRight in orders
+
+junction orders_bottomRight in orders
+junction orders_bottomRight2 in orders
+junction orders_bottomRight3 in orders
+junction orders_bottomRight4 in orders
+junction orders_bottomRight5 in orders
+junction orders_topRight in orders
+junction orders_topRight2 in orders
+junction orders_topRight3 in orders
+junction orders_topRight4 in orders
+junction orders_topRight5 in orders
+
+orders_centerLeft:T -- B:orders_topLeft
+orders_topLeft:T -- B:orders_topLeft2
+orders_topLeft2:T -- B:orders_topLeft3
+orders_topLeft3:T -- B:orders_topLeft4
+orders_topLeft4:T -- B:orders_topLeft5
+orders_centerLeft:B -- T:orders_bottomLeft
+orders_bottomLeft:B -- T:orders_bottomLeft2
+orders_bottomLeft2:B -- T:orders_bottomLeft3
+orders_bottomLeft3:B -- T:orders_bottomLeft4
+orders_bottomLeft4:B -- T:orders_bottomLeft5
+orders_centerRight:T -- B:orders_topRight
+orders_topRight:T -- B:orders_topRight2
+orders_topRight2:T -- B:orders_topRight3
+orders_topRight3:T -- B:orders_topRight4
+orders_topRight4:T -- B:orders_topRight5
+orders_centerRight:B -- T:orders_bottomRight
+orders_bottomRight:B -- T:orders_bottomRight2
+orders_bottomRight2:B -- T:orders_bottomRight3
+orders_bottomRight3:B -- T:orders_bottomRight4
+orders_bottomRight4:B -- T:orders_bottomRight5
+
+ordersApi:R -- L:orders_centerLeft
+orders_centerRight:R -- L:ordersDB
+
+
+orders_bottomLeft:R -- L:ordersGetById
+orders_bottomLeft2:R -- L:ordersCreate
+orders_bottomLeft3:R -- L:ordersList
+orders_bottomLeft4:R -- L:ordersCancelOrder
+orders_bottomLeft5:R -- L:ordersDashboardMetrics
+orders_topLeft:R -- L:ordersUpdateStatus
+orders_topLeft2:R -- L:ordersAssign
+orders_topLeft3:R -- L:ordersAssignDriver
+orders_topLeft4:R -- L:ordersMyOrders
+orders_topLeft5:R -- L:ordersMyAssignments
+ordersGetById:R -- L:orders_bottomRight
+ordersCreate:R -- L:orders_bottomRight2
+ordersList:R -- L:orders_bottomRight3
+ordersCancelOrder:R -- L:orders_bottomRight4
+ordersDashboardMetrics:R -- L:orders_bottomRight5
+ordersUpdateStatus:R -- L:orders_topRight
+ordersAssign:R -- L:orders_topRight2
+ordersAssignDriver:R -- L:orders_topRight3
+ordersMyOrders:R -- L:orders_topRight4
+ordersMyAssignments:R -- L:orders_topRight5
+
+%% === WEBSOCKET SERVICE ===
+service wsGateway(logos:aws-api-gateway)[Gateway] in websocket
+service wsConnect(logos:aws-lambda)[Connect] in websocket
+service wsDisconnect(logos:aws-lambda)[Disconnect] in websocket
+service wsMessageHandler(logos:aws-lambda)[Message Handler] in websocket
+service wsBroadcast(logos:aws-lambda)[Broadcast] in websocket
+
+junction ws_centerLeft in websocket
+
+junction ws_bottomLeft in websocket
+junction ws_bottomLeft2 in websocket
+junction ws_topLeft in websocket
+junction ws_topLeft2 in websocket
+
+ws_centerLeft:T -- B:ws_topLeft
+ws_topLeft:T -- B:ws_topLeft2
+ws_centerLeft:B -- T:ws_bottomLeft
+ws_bottomLeft:B -- T:ws_bottomLeft2
+
+wsGateway:R -- L:ws_centerLeft
+ws_bottomLeft:R -- L:wsConnect
+ws_bottomLeft2:R -- L:wsDisconnect
+ws_topLeft:R -- L:wsMessageHandler
+ws_topLeft2:R -- L:wsBroadcast
+
+%% === PRODUCTS (restaurant-products-service) ===
+service productsApi(logos:aws-api-gateway)[productsApi] in products
+service listProducts(logos:aws-lambda)[listProducts] in products
+service getProduct(logos:aws-lambda)[getProduct] in products
+service createProduct(logos:aws-lambda)[createProduct] in products
+service updateProduct(logos:aws-lambda)[updateProduct] in products
+service deleteProduct(logos:aws-lambda)[deleteProduct] in products
+service uploadImage(logos:aws-lambda)[uploadImage] in products
+service getImage(logos:aws-lambda)[getImage] in products
+service deleteImage(logos:aws-lambda)[deleteImage] in products
+service authorizerFunc(logos:aws-lambda)[authorizerFunc] in products
+
+service ProductsTable(logos:aws-dynamodb)[ProductsTable] in products
+service ImagesBucket(logos:aws-s3)[ImagesBucket] in products
+
+
+junction products_centerLeft in products
+
+junction products_bottomLeft in products
+junction products_bottomLeft2 in products
+junction products_bottomLeft3 in products
+junction products_bottomLeft4 in products
+junction products_bottomLeft5 in products
+junction products_topLeft in products
+junction products_topLeft2 in products
+junction products_topLeft3 in products
+junction products_topLeft4 in products
+
+junction products_centerRight in products
+
+junction products_bottomRight in products
+junction products_bottomRight2 in products
+junction products_bottomRight3 in products
+junction products_bottomRight4 in products
+junction products_topRight in products
+junction products_topRight2 in products
+junction products_topRight3 in products
+junction products_topRight4 in products
+
+products_centerLeft:T -- B:products_topLeft
+products_topLeft:T -- B:products_topLeft2
+products_topLeft2:T -- B:products_topLeft3
+products_topLeft3:T -- B:products_topLeft4
+products_centerLeft:B -- T:products_bottomLeft
+products_bottomLeft:B -- T:products_bottomLeft2
+products_bottomLeft2:B -- T:products_bottomLeft3
+products_bottomLeft3:B -- T:products_bottomLeft4
+products_centerRight:T -- B:products_topRight
+products_topRight:T -- B:products_topRight2
+products_topRight2:T -- B:products_topRight3
+products_topRight3:T -- B:products_topRight4
+products_centerRight:B -- T:products_bottomRight
+products_bottomRight:B -- T:products_bottomRight2
+products_bottomRight2:B -- T:products_bottomRight3
+products_bottomRight3:B -- T:products_bottomRight4
+
+productsApi:R -- L:products_centerLeft
+products_centerRight:R -- L:ProductsTable
+
+products_bottomLeft:R -- L:getProduct
+products_bottomLeft2:R -- L:createProduct
+products_bottomLeft3:R -- L:listProducts
+products_bottomLeft4:R -- L:deleteProduct
+products_topLeft:R -- L:uploadImage
+products_topLeft2:R -- L:getImage
+products_topLeft3:R -- L:deleteImage
+products_topLeft4:R -- L:authorizerFunc
+getProduct:R -- L:products_bottomRight
+createProduct:R -- L:products_bottomRight2
+listProducts:R -- L:products_bottomRight3
+deleteProduct:R -- L:products_bottomRight4
+uploadImage:R -- L:products_topRight
+getImage:R -- L:products_topRight2
+deleteImage:R -- L:products_topRight3
+authorizerFunc:R -- L:products_topRight4
+
+products_centerLeft:R -- L:updateProduct
+updateProduct:R -- L:products_centerRight
+
+products_topRight:R -- L:ImagesBucket
