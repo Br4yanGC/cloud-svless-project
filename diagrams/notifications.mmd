@@ -10,7 +10,7 @@ service notifyListSubscriptions(logos:aws-lambda)[notifyListSubscriptions] in no
 service notifySubscribeEmail(logos:aws-lambda)[notifySubscribeEmail] in notifications
 service notifyUnsubscribe(logos:aws-lambda)[notifyUnsubscribe] in notifications
 service notifyDB(logos:aws-dynamodb)[notifyDB] in notifications
-service notifySNS(logos:aws-sns)[notifySNS] in notifications
+%%service notifySNS(logos:aws-sns)[notifySNS] in notifications
 
 
 junction notify_centerLeft in notifications
